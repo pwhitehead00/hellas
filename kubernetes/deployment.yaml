@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: hellas-server
+  name: hellas-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellas-server
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: hellas-server
+    spec:
+      containers:
+      - image: ironhalo/hellas
+        name: hellas
+        resources: {}
