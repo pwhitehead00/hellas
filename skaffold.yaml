@@ -1,0 +1,13 @@
+apiVersion: skaffold/v2beta26
+kind: Config
+metadata:
+  name: hellas
+build:
+  artifacts:
+  - image: ironhalo/hellas
+    docker:
+      dockerfile: Dockerfile
+deploy:
+  kubectl:
+    manifests:
+    - kubernetes/deployment.yaml
