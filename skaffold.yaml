@@ -6,8 +6,8 @@ build:
   artifacts:
   - image: ironhalo/hellas
     docker:
-      dockerfile: Dockerfile
+      dockerfile: cmd/server/Dockerfile
 deploy:
   kubectl:
     manifests:
-    - kubernetes/deployment.yaml
+    - kubernetes/*.yaml
