@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ironhalo/hellas/models"
 )
@@ -27,14 +29,21 @@ func main() {
 		m.Modules = append(m.Modules, v)
 		m.Modules[0].Versions = append(m.Modules[0].Versions, models.Version{"1.0.0"})
 		m.Modules[0].Versions = append(m.Modules[0].Versions, models.Version{"1.1.0"})
-		m.Modules[0].Versions = append(m.Modules[0].Versions, models.Version{"2.0.0"})
+		m.Modules[0].Versions = append(m.Modules[0].Versions, models.Version{"3.8.0"})
+		m.Modules[0].Versions = append(m.Modules[0].Versions, models.Version{"3.11.0"})
 
 		c.JSON(200, m)
 	})
 
-	r.GET("/v1/modules/terraform-aws-modules/vpc/aws/1.0.0/download", func(c *gin.Context) {
+	r.GET("/v1/modules/:namespace/:name/:provider/:version/download", func(c *gin.Context) {
+		namespace := c.Param("namespace")
+		name := c.Param("name")
+		provider := c.Param("provider")
+		version := c.Param("version")
 
-		c.Header("X-Terraform-Get", "https://api.github.com/repos/hashicorp/terraform-aws-consul/tarball/v0.0.1//*?archive=tar.gz")
+		url := fmt.Sprintf("git::https://github.com/%s/terraform-%s-%s?ref=v%s", namespace, provider, name, version)
+
+		c.Header("X-Terraform-Get", url)
 		c.Status(204)
 
 	})
