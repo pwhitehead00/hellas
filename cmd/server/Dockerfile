@@ -17,5 +17,7 @@ FROM scratch
 WORKDIR /app
 
 COPY --from=build /app/server /app/server
+COPY --from=build /app/server.key /app/server.key
+COPY --from=build /app/server.crt /app/server.crt
 
 ENTRYPOINT ["/app/server"]
