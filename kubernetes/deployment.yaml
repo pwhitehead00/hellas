@@ -19,3 +19,5 @@ spec:
       - image: ironhalo/hellas
         name: hellas
         resources: {}
+        ports:
+          - containerPort: 8080
