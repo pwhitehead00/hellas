@@ -5,7 +5,7 @@ import (
 )
 
 type Registry interface {
-	Versions(namespace, name, provider string) models.Modules
+	Versions(namespace, name, provider string) models.ModuleVersions
 	Download(namespace, name, provider, version string) string
 }
 

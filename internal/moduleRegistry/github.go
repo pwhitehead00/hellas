@@ -26,10 +26,9 @@ func NewGitHubClient() Registry {
 	}
 }
 
-func (gh *GitHubClient) Versions(namespace, name, provider string) models.Modules {
-	var m models.Modules
-	var v models.Versions
-	var version []*map[string]string
+func (gh *GitHubClient) Versions(namespace, name, provider string) models.ModuleVersions {
+	var m models.ModuleVersions
+	var versions []*models.ModuleVersion
 	var allTags []*github.RepositoryTag
 	ctx := context.Background()
 
@@ -41,7 +40,6 @@ func (gh *GitHubClient) Versions(namespace, name, provider string) models.Module
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(ctx, namespace, repo, opt)
 		if err != nil {
-
 			fmt.Printf("Error: %v\n", err)
 		}
 
@@ -53,12 +51,18 @@ func (gh *GitHubClient) Versions(namespace, name, provider string) models.Module
 	}
 
 	for _, t := range allTags {
-		o := map[string]string{"version": *t.Name}
-		version = append(version, &o)
+		o := models.ModuleVersion{
+			Version: *t.Name,
+		}
+		versions = append(versions, &o)
 	}
 
-	v.Versions = version
-	m.Modules = append(m.Modules, v)
+	mpv := models.ModuleProviderVersions{
+		Source:   repo,
+		Versions: versions,
+	}
+
+	m.Modules = append(m.Modules, &mpv)
 
 	return m
 }

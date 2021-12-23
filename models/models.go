@@ -4,12 +4,15 @@ type WellKnown struct {
 	Modules string `json:"modules.v1"`
 }
 
-type Modules struct {
-	Modules []struct {
-		Versions []*map[string]string `json:"versions"`
-	} `json:"modules"`
+type ModuleVersions struct {
+	Modules []*ModuleProviderVersions `json:"modules"`
 }
 
-type Versions struct {
-	Versions []*map[string]string `json:"versions"`
+type ModuleProviderVersions struct {
+	Source   string           `json:"source"`
+	Versions []*ModuleVersion `json:"versions"`
+}
+
+type ModuleVersion struct {
+	Version string `json:"version"`
 }
