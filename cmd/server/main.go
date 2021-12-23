@@ -3,10 +3,13 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	v1 "github.com/ironhalo/hellas/api/v1"
+	moduleregistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 	"github.com/ironhalo/hellas/models"
 )
 
 func main() {
+
+	registry := moduleregistry.NewModuleRegistry("github")
 
 	r := gin.Default()
 	r.GET("/ping", func(c *gin.Context) {
@@ -15,7 +18,7 @@ func main() {
 		})
 	})
 
-	v1.ModuleRegistry(r)
+	v1.ModuleRegistryGroup(r, registry)
 
 	r.GET("/.well-known/terraform.json", func(c *gin.Context) {
 		var wk models.WellKnown
