@@ -11,19 +11,17 @@ import (
 )
 
 func TestGitHubDownload(t *testing.T) {
-	t.Run("GitHub downoad", func(t *testing.T) {
+	t.Run("Github Download Source", func(t *testing.T) {
 		expected := "git::https://github.com/my-namespace/terraform-happycloud-module?ref=v3.11.0"
 
 		c := NewGitHubClient()
-		got := c.Download("my-namespace", "module", "happycloud", "3.11.0")
-		if got != expected {
-			t.Fatalf("Expected %s, got %s", expected, got)
-		}
+		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
+		assert.Equal(t, expected, actual, "Validate github download source")
 	})
 }
 
 func TestGitHubClient(t *testing.T) {
-	t.Run("Default github client", func(t *testing.T) {
+	t.Run("Default Github Client", func(t *testing.T) {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 		}
@@ -33,12 +31,12 @@ func TestGitHubClient(t *testing.T) {
 		}
 
 		actual := NewGitHubClient()
-		assert.Equal(t, expected, actual, "GitHub Clients should be equal")
+		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 }
 
 func TestGitHubVersions(t *testing.T) {
-	t.Run("GitHub versions", func(t *testing.T) {
+	t.Run("Github Versions", func(t *testing.T) {
 		expected := models.ModuleVersions{
 			Modules: []*models.ModuleProviderVersions{
 				{
