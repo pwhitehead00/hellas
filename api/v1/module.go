@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	moduleRegistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
@@ -16,7 +18,6 @@ func download(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 		version := c.Param("version")
 
 		url := mr.Download(namespace, name, provider, version)
-		// url := fmt.Sprintf("git::https://github.com/%s/terraform-%s-%s?ref=v%s", namespace, provider, name, version)
 
 		c.Header("X-Terraform-Get", url)
 		c.Status(204)
@@ -33,9 +34,14 @@ func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 		provider := c.Param("provider")
 		name := c.Param("name")
 
-		o := mr.Versions(namespace, name, provider)
-		// o := gh.MegaGitHub(namespace, provider, name)
-		c.JSON(200, o)
+		v, err := mr.GetVersions(namespace, name, provider)
+		if err != nil {
+			c.Error(err)
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest, "message": err.Error()})
+		} else {
+			o := mr.Versions(namespace, name, provider, v)
+			c.JSON(200, o)
+		}
 	})
 }
 
