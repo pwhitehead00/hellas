@@ -4,10 +4,20 @@ metadata:
   name: hellas
 build:
   artifacts:
+    - image: ironhalo/hellas
+      docker:
+        dockerfile: cmd/server/Dockerfile
+test:
   - image: ironhalo/hellas
-    docker:
-      dockerfile: cmd/server/Dockerfile
+    custom:
+      - command: "go test -v ./..."
+        dependencies:
+          paths:
+          - "internal/**"
+          - "cmd/**/*.go"
+          - "api/**"
+          - "models/*.go"
 deploy:
   kubectl:
     manifests:
-    - kubernetes/*.yaml
+      - kubernetes/*.yaml
