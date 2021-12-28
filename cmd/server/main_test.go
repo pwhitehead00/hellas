@@ -45,11 +45,5 @@ func TestV1Endpoints(t *testing.T) {
 		assert.Equal(t, expected, w.Header().Get("X-Terraform-Get"))
 	})
 
-	// t.Run("Test Service Discovery Endpoint", func(t *testing.T) {
-	// 	expected := "{\"modules.v1\":\"/v1/modules/\"}"
-	// 	w := testEndpoint("GET", "/.well-known/terraform.json")
-
-	// 	assert.Equal(t, 200, w.Code)
-	// 	assert.Equal(t, expected, w.Body.String())
-	// })
+	// TODO: Test Versions Endpoint
 }
