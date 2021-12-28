@@ -1,6 +1,6 @@
-.terraform.lock.hcl
-.terraform
-.tools-version
-server.crt
-server.key
-server
+/.terraform.lock.hcl
+/.terraform
+/.tools-version
+/server.crt
+/server.key
+/server

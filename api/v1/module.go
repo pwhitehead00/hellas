@@ -7,7 +7,6 @@ import (
 	moduleRegistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
 
-// https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws/3.11.0/download
 func download(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 	download := rg.Group("/modules")
 
@@ -20,12 +19,10 @@ func download(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 		url := mr.Download(namespace, name, provider, version)
 
 		c.Header("X-Terraform-Get", url)
-		c.Status(204)
+		c.Status(http.StatusNoContent)
 	})
 }
 
-// https://github.com/terraform-aws-modules/terraform-aws-vpc
-// https://registry.terraform.io/v1/modules/terraform-aws-modules/vpc/aws/versions
 func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 	versions := rg.Group("/modules")
 
