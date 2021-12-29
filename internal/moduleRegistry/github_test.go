@@ -23,7 +23,7 @@ func TestGitHubDownload(t *testing.T) {
 func TestGitHubClient(t *testing.T) {
 	t.Run("Default Github Client", func(t *testing.T) {
 		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		c := &http.Client{Transport: tr}
 		expected := &GitHubClient{
