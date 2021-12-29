@@ -26,21 +26,18 @@ func NewGitHubClient() Registry {
 	}
 }
 
-func (gh *GitHubClient) Versions(namespace, name, provider string) models.ModuleVersions {
-	var m models.ModuleVersions
-	var versions []*models.ModuleVersion
+func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
-	ctx := context.Background()
-
+	var versions []string
 	opt := &github.ListOptions{
 		PerPage: 100,
 	}
 
 	repo := fmt.Sprintf("terraform-%s-%s", provider, name)
 	for {
-		tags, resp, err := gh.Client.Repositories.ListTags(ctx, namespace, repo, opt)
+		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
 		if err != nil {
-			fmt.Printf("Error: %v\n", err)
+			return nil, err
 		}
 
 		allTags = append(allTags, tags...)
@@ -50,16 +47,27 @@ func (gh *GitHubClient) Versions(namespace, name, provider string) models.Module
 		opt.Page = resp.NextPage
 	}
 
-	for _, t := range allTags {
+	for _, v := range allTags {
+		versions = append(versions, *v.Name)
+	}
+	return versions, nil
+}
+
+func (gh *GitHubClient) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
+	var m models.ModuleVersions
+	var mv []*models.ModuleVersion
+	repo := fmt.Sprintf("terraform-%s-%s", provider, name)
+
+	for _, t := range version {
 		o := models.ModuleVersion{
-			Version: *t.Name,
+			Version: t,
 		}
-		versions = append(versions, &o)
+		mv = append(mv, &o)
 	}
 
 	mpv := models.ModuleProviderVersions{
-		Source:   repo,
-		Versions: versions,
+		Source:   fmt.Sprintf("%s/%s", namespace, repo),
+		Versions: mv,
 	}
 
 	m.Modules = append(m.Modules, &mpv)
