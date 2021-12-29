@@ -16,7 +16,7 @@ type GitHubClient struct {
 
 func NewGitHubClient() Registry {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	c := &http.Client{Transport: tr}
 	client := github.NewClient(c)
