@@ -20,5 +20,5 @@ func setupRouter() *gin.Engine {
 
 func main() {
 	r := setupRouter()
-	r.RunTLS(":8080", "/app/server.crt", "/app/server.key")
+	r.RunTLS(":8443", "/app/server.crt", "/app/server.key")
 }
