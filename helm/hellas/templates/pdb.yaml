@@ -1,0 +1,13 @@
+{{- if .Values.podDisruptionBudget.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  labels:
+{{ include "hellas.labels" . | indent 4 }}
+  name: {{ template "hellas.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+{{ include "hellas.selectorLabels" . | indent 6 }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+{{- end }}

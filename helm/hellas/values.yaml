@@ -1,9 +1,8 @@
-replicaCount: 3
+replicaCount: 1
 
 imageKey:
   repository: ironhalo/hellas
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
   tag: "latest"
 
 imagePullSecrets: []
@@ -60,14 +59,19 @@ resources: {}
 
 autoscaling:
   enabled: false
-  minReplicas: 1
-  maxReplicas: 100
+  minReplicas: 3
+  maxReplicas: 10
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 2
 
 updateStrategy: {}
   # rollingUpdate:
   #   maxUnavailable: 1
+  #   maxSurge: 1
   # type: RollingUpdate
 
 nodeSelector: {}
