@@ -18,6 +18,11 @@ test:
           - "api/**"
           - "models/*.go"
 deploy:
-  kubectl:
-    manifests:
-      - kubernetes/*.yaml
+  helm:
+    releases:
+      - name: hellas
+        chartPath: helm/hellas
+        artifactOverrides:
+          imageKey: ironhalo/hellas
+        imageStrategy:
+          helm: {}

@@ -1,0 +1,3 @@
+Successfully deployed Hellas!
+Autscaling: {{ .Values.autoscaling.enabled }}
+PDB: {{ .Values.podDisruptionBudget.enabled }}
