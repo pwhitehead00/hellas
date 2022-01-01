@@ -1,41 +1,32 @@
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: Pod
 metadata:
   labels:
     app: terraform
   name: terraform
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: terraform
-  template:
-    metadata:
-      labels:
-        app: terraform
-    spec:
-      containers:
-      - command:
-        - sleep
-        - infinity
-        env:
-        - name: "TF_LOG"
-          value: "TRACE"
-        image: hashicorp/terraform:1.0.11
-        name: terraform
-        resources: {}
-        volumeMounts:
-        - name: apps
-          mountPath: /app
-        - name: terraform
-          mountPath: /terraform
-      volumes:
-      - name: apps
-        emptyDir: {}
-      - name: terraform
-        configMap:
-          name: terraform
+  containers:
+  - command:
+    - sleep
+    - infinity
+    env:
+    - name: "TF_LOG"
+      value: "TRACE"
+    image: hashicorp/terraform:1.0.11
+    name: terraform
+    resources: {}
+    volumeMounts:
+    - name: apps
+      mountPath: /app
+    - name: terraform
+      mountPath: /terraform
+  volumes:
+  - name: apps
+    emptyDir: {}
+  - name: terraform
+    configMap:
+      name: terraform
 
 ---
 apiVersion: v1
@@ -44,14 +35,8 @@ metadata:
   name: terraform
 data:
   main.tf: |
-    module "tf_vpc" {
-      source  = "terraform-aws-modules/vpc/aws"
-      version = "3.11.0"
-      # insert the 21 required variables here
-    }
-
     module "hellas_vpc" {
-      source  = "hellas.default:8080/terraform-aws-modules/vpc/aws"
+      source  = "hellas.default/terraform-aws-modules/vpc/aws"
       version = "3.11.0"
       # insert the 21 required variables here
     }

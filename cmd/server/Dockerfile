@@ -6,11 +6,10 @@ RUN apk update && \
 
 WORKDIR /app
 
-COPY go.* ./
+COPY . .
 RUN go mod download
 RUN go mod verify
 
-COPY . .
 RUN make build
 
 FROM scratch

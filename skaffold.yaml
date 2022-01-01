@@ -13,15 +13,12 @@ test:
       - command: "go test -v ./..."
         dependencies:
           paths:
-          - "internal/**"
-          - "cmd/**/*.go"
-          - "api/**"
-          - "models/*.go"
+          - "./**/*.go"
 deploy:
   helm:
     releases:
       - name: hellas
-        chartPath: helm/hellas
+        chartPath: charts/hellas
         artifactOverrides:
           imageKey: ironhalo/hellas
         imageStrategy:
