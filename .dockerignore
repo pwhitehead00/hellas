@@ -1,2 +1,6 @@
 .git
 .vscode
+.tools-version
+LICENSE
+README.md
+skaffold.yaml

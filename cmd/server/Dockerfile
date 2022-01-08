@@ -4,7 +4,7 @@ RUN apk update && \
     apk add git make && \
     rm -rf /var/cache/apk/*
 
-WORKDIR /app
+WORKDIR /build
 
 COPY . .
 RUN go mod download
@@ -15,8 +15,8 @@ RUN make build
 FROM scratch
 WORKDIR /app
 
-COPY --from=build /app/server /app/server
-COPY --from=build /app/server.key /app/server.key
-COPY --from=build /app/server.crt /app/server.crt
+COPY --from=build /build/server /app/server
+COPY --from=build /build/server.key /app/server.key
+COPY --from=build /build/server.crt /app/server.crt
 
 ENTRYPOINT ["/app/server"]

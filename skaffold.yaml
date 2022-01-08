@@ -13,7 +13,7 @@ test:
       - command: "go test -v ./..."
         dependencies:
           paths:
-          - "./**/*.go"
+            - "./**/*.go"
 deploy:
   helm:
     releases:
