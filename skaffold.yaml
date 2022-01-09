@@ -19,6 +19,8 @@ deploy:
     releases:
       - name: hellas
         chartPath: charts/hellas
+        valuesFiles:
+          - ./test/values-skaffold.yaml
         artifactOverrides:
           imageKey: ironhalo/hellas
         imageStrategy:

@@ -13,10 +13,7 @@ RUN go mod verify
 RUN make build
 
 FROM scratch
-WORKDIR /app
 
-COPY --from=build /build/server /app/server
-COPY --from=build /build/server.key /app/server.key
-COPY --from=build /build/server.crt /app/server.crt
+COPY --from=build /build/server /usr/local/bin/server
 
-ENTRYPOINT ["/app/server"]
+ENTRYPOINT ["server"]

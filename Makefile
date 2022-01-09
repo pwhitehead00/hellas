@@ -3,10 +3,7 @@ LDFLAGS := -ldflags "-X main.Version=${VERSION}"
 
 .PHONY: up
 up:
-	./easyrsa.sh
 	minikube start --kubernetes-version 1.22.4
-	kubectl apply -f ./kubernetes/terraform.yaml
-	kubectl cp server.crt terraform:/etc/ssl/certs/
 	skaffold dev
 
 .PHONY: clean
