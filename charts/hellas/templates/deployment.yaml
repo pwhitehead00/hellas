@@ -52,13 +52,32 @@ spec:
               containerPort: 8443
               protocol: TCP
           volumeMounts:
-            - name: hellas
+            - name: app
               mountPath: "/app"
               readOnly: true
+      initContainers:
+        - name: copy
+          image: alpine:latest
+          volumeMounts:
+          - name: secret
+            mountPath: /secret
+          - name: config
+            mountPath: /config
+          - name: app
+            mountPath: /app
+          command:
+          - "sh"
+          - "-c"
+          - "cp /secret/* /config/* /app"
       volumes:
-        - name: hellas
+        - name: secret
           secret:
             secretName: {{ include "hellas.fullname" . }}
+        - name: config
+          configMap:
+            name: {{ include "hellas.fullname" . }}
+        - name: app
+          emptyDir: {}
       {{- if .Values.tolerations }}
       tolerations: {{- toYaml .Values.tolerations | nindent 8}}
       {{- end }}
