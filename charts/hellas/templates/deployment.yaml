@@ -51,6 +51,14 @@ spec:
             - name: hellas
               containerPort: 8443
               protocol: TCP
+          volumeMounts:
+            - name: hellas
+              mountPath: "/app"
+              readOnly: true
+      volumes:
+        - name: hellas
+          secret:
+            secretName: {{ include "hellas.fullname" . }}
       {{- if .Values.tolerations }}
       tolerations: {{- toYaml .Values.tolerations | nindent 8}}
       {{- end }}

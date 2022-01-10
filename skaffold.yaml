@@ -13,15 +13,14 @@ test:
       - command: "go test -v ./..."
         dependencies:
           paths:
-          - "internal/**"
-          - "cmd/**/*.go"
-          - "api/**"
-          - "models/*.go"
+            - "./**/*.go"
 deploy:
   helm:
     releases:
       - name: hellas
-        chartPath: helm/hellas
+        chartPath: charts/hellas
+        valuesFiles:
+          - ./test/values-skaffold.yaml
         artifactOverrides:
           imageKey: ironhalo/hellas
         imageStrategy:
