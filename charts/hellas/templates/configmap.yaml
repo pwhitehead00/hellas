@@ -5,7 +5,7 @@ metadata:
   labels:
   {{- include "hellas.labels" . | nindent 4 }}
 data:
-  config: |
+  config.json: |
     {{- if eq "github" .Values.moduleRegistryType }}
-    moduleRegistryType={{ .Values.moduleRegistryType | lower }}
+    {{ .Values.github | toJson | quote }}
     {{- end }}

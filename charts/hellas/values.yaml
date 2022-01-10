@@ -4,6 +4,9 @@ moduleRegistryType: ""
 cert: ""
 key: ""
 
+github:
+  insecureSkipVerify: true
+
 imageKey:
   repository: ironhalo/hellas
   pullPolicy: IfNotPresent
