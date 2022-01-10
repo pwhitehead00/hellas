@@ -11,7 +11,7 @@ import (
 
 func testEndpoint(method, endpoint string) *httptest.ResponseRecorder {
 	m := strings.ToUpper(method)
-	router := setupRouter()
+	router := setupRouter("github")
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest(m, endpoint, nil)
