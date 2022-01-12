@@ -71,7 +71,7 @@ spec:
           command:
           - "sh"
           - "-c"
-          - "cp /secret/* /config/* /app"
+          - "cp -v /secret/* /config/* /app"
       volumes:
         - name: secret
           secret:

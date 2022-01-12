@@ -3,8 +3,11 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	"github.com/google/go-github/v40/github"
 	"github.com/ironhalo/hellas/models"
@@ -12,17 +15,49 @@ import (
 
 type GitHubClient struct {
 	Client *github.Client
+	Config *GitHubConfig
+}
+
+type GitHubConfig struct {
+	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
+	Protocol           string `json:"protocol"`
+}
+
+func initConfig() (*GitHubConfig, error) {
+	var config GitHubConfig
+
+	file, err := os.ReadFile("/app/config.json")
+	if err != nil {
+		return  nil, err
+	}
+
+	err = json.Unmarshal(file, &config)
+	if err != nil {
+		return nil, err
+	}
+
+	if (config.Protocol != "https" && config.Protocol != "ssh") {
+		log.Fatalf("Invalid protocol: %s", config.Protocol)
+	}
+
+	return &config, nil
 }
 
 func NewGitHubClient() Registry {
+	config, err := initConfig()
+	if err != nil {
+		log.Fatalf("Failed to initialize github config: %s", err)
+	}
+
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
 	}
 	c := &http.Client{Transport: tr}
 	client := github.NewClient(c)
 
 	return &GitHubClient{
 		Client: client,
+		Config: config,
 	}
 }
 
@@ -76,6 +111,6 @@ func (gh *GitHubClient) Versions(namespace, name, provider string, version []str
 }
 
 func (gh *GitHubClient) Download(namespace, name, provider, version string) (source string) {
-	source = fmt.Sprintf("git::https://github.com/%s/terraform-%s-%s?ref=v%s", namespace, provider, name, version)
+	source = fmt.Sprintf("git::%s://github.com/%s/terraform-%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
 	return
 }
