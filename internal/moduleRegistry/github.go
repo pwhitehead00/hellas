@@ -21,6 +21,7 @@ type GitHubClient struct {
 type GitHubConfig struct {
 	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
 	Protocol           string `json:"protocol"`
+	Prefix             string `json:"prefix"`
 }
 
 func initConfig() (*GitHubConfig, error) {
@@ -32,7 +33,7 @@ func initConfig() (*GitHubConfig, error) {
 
 	file, err := os.ReadFile(f)
 	if err != nil {
-		return  nil, err
+		return nil, err
 	}
 
 	err = json.Unmarshal(file, &config)
@@ -40,7 +41,7 @@ func initConfig() (*GitHubConfig, error) {
 		return nil, err
 	}
 
-	if (config.Protocol != "https" && config.Protocol != "ssh") {
+	if config.Protocol != "https" && config.Protocol != "ssh" {
 		log.Fatalf("Invalid protocol: %s", config.Protocol)
 	}
 
@@ -68,11 +69,17 @@ func NewGitHubClient() Registry {
 func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
+	var repo string
 	opt := &github.ListOptions{
 		PerPage: 100,
 	}
 
-	repo := fmt.Sprintf("terraform-%s-%s", provider, name)
+	if gh.Config.Prefix == "" {
+		repo = fmt.Sprintf("%s-%s", provider, name)
+	} else {
+		repo = fmt.Sprintf("%s-%s-%s", gh.Config.Prefix, provider, name)
+	}
+
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
 		if err != nil {

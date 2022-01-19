@@ -5,3 +5,4 @@ moduleRegistryType: github
 
 github:
   insecureSkipVerify: true
+  prefix: terraform

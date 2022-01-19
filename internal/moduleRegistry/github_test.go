@@ -32,7 +32,8 @@ func TestGitHubClient(t *testing.T) {
 			Client: github.NewClient(c),
 			Config: &GitHubConfig{
 				InsecureSkipVerify: true,
-				Protocol: "https",
+				Protocol:           "https",
+				Prefix:             "terraform",
 			},
 		}
 

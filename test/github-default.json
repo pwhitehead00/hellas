@@ -1,4 +1,5 @@
 {
   "insecureSkipVerify": true,
-  "protocol": "https"
+  "protocol": "https",
+  "prefix": "terraform"
 }
