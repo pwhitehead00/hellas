@@ -12,14 +12,22 @@ import (
 )
 
 func TestGitHubDownload(t *testing.T) {
-	t.Run("Github Download Source", func(t *testing.T) {
-		expected := "git::https://github.com/my-namespace/terraform-happycloud-module?ref=v3.11.0"
+	t.Run("Github Download Source with Prefix", func(t *testing.T) {
+		expected := "git::https://github.com/my-namespace/prefix-happycloud-module?ref=v3.11.0"
 
 		os.Setenv("CONFIG", "../../test/github-default.json")
 		c := NewGitHubClient()
 		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
+	// t.Run("Github Download Source without Prefix", func(t *testing.T) {
+	// 	expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
+
+	// 	os.Setenv("CONFIG", "../../test/github-noprefix.json")
+	// 	c := NewGitHubClient()
+	// 	actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
+	// 	assert.Equal(t, expected, actual, "Validate github download source")
+	// })
 }
 
 func TestGitHubClient(t *testing.T) {
@@ -33,7 +41,7 @@ func TestGitHubClient(t *testing.T) {
 			Config: &GitHubConfig{
 				InsecureSkipVerify: true,
 				Protocol:           "https",
-				Prefix:             "terraform",
+				Prefix:             "prefix",
 			},
 		}
 
@@ -48,7 +56,7 @@ func TestGitHubVersions(t *testing.T) {
 		expected := models.ModuleVersions{
 			Modules: []*models.ModuleProviderVersions{
 				{
-					Source: "my-namespace/terraform-provider-name",
+					Source: "my-namespace/prefix-provider-name",
 					Versions: []*models.ModuleVersion{
 						{
 							Version: "1.0.0",

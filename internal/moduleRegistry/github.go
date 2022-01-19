@@ -66,19 +66,23 @@ func NewGitHubClient() Registry {
 	}
 }
 
+func repo(prefix, provider, name string) string {
+	if prefix == "" {
+		return fmt.Sprintf("%s-%s", provider, name)
+	}
+
+	return fmt.Sprintf("%s-%s-%s", prefix, provider, name)
+}
+
 func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
-	var repo string
+
 	opt := &github.ListOptions{
 		PerPage: 100,
 	}
 
-	if gh.Config.Prefix == "" {
-		repo = fmt.Sprintf("%s-%s", provider, name)
-	} else {
-		repo = fmt.Sprintf("%s-%s-%s", gh.Config.Prefix, provider, name)
-	}
+	repo := repo(gh.Config.Prefix, provider, name)
 
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
@@ -102,7 +106,8 @@ func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string,
 func (gh *GitHubClient) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
 	var m models.ModuleVersions
 	var mv []*models.ModuleVersion
-	repo := fmt.Sprintf("terraform-%s-%s", provider, name)
+
+	repo := repo(gh.Config.Prefix, provider, name)
 
 	for _, t := range version {
 		o := models.ModuleVersion{
@@ -121,7 +126,10 @@ func (gh *GitHubClient) Versions(namespace, name, provider string, version []str
 	return m
 }
 
-func (gh *GitHubClient) Download(namespace, name, provider, version string) (source string) {
-	source = fmt.Sprintf("git::%s://github.com/%s/terraform-%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
-	return
+func (gh *GitHubClient) Download(namespace, name, provider, version string) string {
+	if gh.Config.Prefix == "" {
+		return fmt.Sprintf("git::%s://github.com/%s/%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
+	}
+	return fmt.Sprintf("git::%s://github.com/%s/%s-%s-%s?ref=v%s", gh.Config.Protocol, namespace, gh.Config.Prefix, provider, name, version)
+
 }

@@ -40,7 +40,7 @@ func TestRootEndpoints(t *testing.T) {
 
 func TestV1Endpoints(t *testing.T) {
 	t.Run("Test Download Endpoint", func(t *testing.T) {
-		expected := "git::https://github.com/acme/terraform-hapycloud-module?ref=v1.0.0"
+		expected := "git::https://github.com/acme/prefix-hapycloud-module?ref=v1.0.0"
 		w := testEndpoint("GET", "/v1/modules/acme/module/hapycloud/1.0.0/download")
 
 		assert.Equal(t, http.StatusNoContent, w.Code)
