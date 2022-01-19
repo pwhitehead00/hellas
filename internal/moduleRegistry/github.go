@@ -25,8 +25,12 @@ type GitHubConfig struct {
 
 func initConfig() (*GitHubConfig, error) {
 	var config GitHubConfig
+	f, ok := os.LookupEnv("CONFIG")
+	if !ok {
+		log.Fatal("Failed to load config")
+	}
 
-	file, err := os.ReadFile("/app/config.json")
+	file, err := os.ReadFile(f)
 	if err != nil {
 		return  nil, err
 	}

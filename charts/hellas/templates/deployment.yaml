@@ -31,6 +31,8 @@ spec:
           env:
             - name: MODULE_REGISTRY_TYPE
               value: {{ .Values.moduleRegistryType | lower }}
+            - name: CONFIG
+              value: "/app/config.json"
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:

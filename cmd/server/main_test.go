@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 )
 
 func testEndpoint(method, endpoint string) *httptest.ResponseRecorder {
+	os.Setenv("CONFIG", "../../test/github-default.json")
 	m := strings.ToUpper(method)
 	router := setupRouter("github")
 
