@@ -20,14 +20,14 @@ func TestGitHubDownload(t *testing.T) {
 		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
-	// t.Run("Github Download Source without Prefix", func(t *testing.T) {
-	// 	expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
+	t.Run("Github Download Source without Prefix", func(t *testing.T) {
+		expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
 
-	// 	os.Setenv("CONFIG", "../../test/github-noprefix.json")
-	// 	c := NewGitHubClient()
-	// 	actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
-	// 	assert.Equal(t, expected, actual, "Validate github download source")
-	// })
+		os.Setenv("CONFIG", "../../test/github-noprefix.json")
+		c := NewGitHubClient()
+		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
+		assert.Equal(t, expected, actual, "Validate github download source")
+	})
 }
 
 func TestGitHubClient(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/go-github/v40/github"
 	"github.com/ironhalo/hellas/models"
+	"golang.org/x/oauth2"
 )
 
 type GitHubClient struct {
@@ -57,8 +58,30 @@ func NewGitHubClient() Registry {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
 	}
-	c := &http.Client{Transport: tr}
-	client := github.NewClient(c)
+
+	sslcli := &http.Client{Transport: tr}
+	ctx := context.TODO()
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
+
+	token, ok := os.LookupEnv("TOKEN")
+	if !ok {
+		log.Println("No token provided, using unauthenticated GitHub client")
+		tc := oauth2.NewClient(ctx, nil)
+		client := github.NewClient(tc)
+
+		return &GitHubClient{
+			Client: client,
+			Config: config,
+		}
+	}
+
+	log.Println("Token found, using authenticated GitHub client")
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: string(token)},
+	)
+
+	tc := oauth2.NewClient(ctx, ts)
+	client := github.NewClient(tc)
 
 	return &GitHubClient{
 		Client: client,
