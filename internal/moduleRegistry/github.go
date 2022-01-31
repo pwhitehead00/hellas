@@ -25,14 +25,10 @@ type GitHubConfig struct {
 	Prefix             string `json:"prefix"`
 }
 
-func initConfig() (*GitHubConfig, error) {
+func initConfig(configFile string) (*GitHubConfig, error) {
 	var config GitHubConfig
-	f, ok := os.LookupEnv("CONFIG")
-	if !ok {
-		log.Fatal("Failed to load config")
-	}
 
-	file, err := os.ReadFile(f)
+	file, err := os.ReadFile(configFile)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +45,8 @@ func initConfig() (*GitHubConfig, error) {
 	return &config, nil
 }
 
-func NewGitHubClient() Registry {
-	config, err := initConfig()
+func NewGitHubClient(configFile string) Registry {
+	config, err := initConfig(configFile)
 	if err != nil {
 		log.Fatalf("Failed to initialize github config: %s", err)
 	}

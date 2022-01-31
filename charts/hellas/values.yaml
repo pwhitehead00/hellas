@@ -5,8 +5,9 @@ cert: ""
 key: ""
 
 github:
-  insecureSkipVerify: false
-  protocol: https
+  config:
+    insecureSkipVerify: false
+    protocol: https
 
 imageKey:
   repository: ironhalo/hellas

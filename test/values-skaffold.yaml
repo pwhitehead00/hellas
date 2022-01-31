@@ -4,5 +4,6 @@ key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZ
 moduleRegistryType: github
 
 github:
-  insecureSkipVerify: true
-  prefix: terraform
+  config:
+    insecureSkipVerify: true
+    prefix: terraform

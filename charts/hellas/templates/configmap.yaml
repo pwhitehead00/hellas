@@ -7,5 +7,5 @@ metadata:
 data:
   config.json: |-
     {{- if eq "github" .Values.moduleRegistryType }}
-    {{- .Values.github | toPrettyJson | nindent 4 }}
+    {{- .Values.github.config | toPrettyJson | nindent 4 }}
     {{- end }}

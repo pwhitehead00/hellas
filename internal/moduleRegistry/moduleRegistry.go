@@ -13,7 +13,7 @@ type Registry interface {
 func NewModuleRegistry(registryType string) (r Registry) {
 	switch registryType {
 	case "github":
-		r = NewGitHubClient()
+		r = NewGitHubClient("/config/config.json")
 	default:
 		panic("unsupported registy type")
 	}

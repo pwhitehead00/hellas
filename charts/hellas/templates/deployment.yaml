@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         {{- include "hellas.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/tls: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -33,11 +37,13 @@ spec:
               value: {{ .Values.moduleRegistryType | lower }}
             - name: CONFIG
               value: "/config/config.json"
+            {{- if .Values.github.token }}
             - name: TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "hellas.fullname" . }}
                   key: token
+            {{- end }}
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:
