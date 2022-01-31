@@ -17,6 +17,6 @@ func WellKnown(r *gin.Engine) {
 	r.GET("/.well-known/terraform.json", func(c *gin.Context) {
 		var wk models.WellKnown
 		wk.Modules = "/v1/modules/"
-		c.JSON(200, wk)
+		c.JSON(http.StatusOK, wk)
 	})
 }

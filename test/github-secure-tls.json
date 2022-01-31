@@ -1,0 +1,5 @@
+{
+  "insecureSkipVerify": true,
+  "protocol": "https",
+  "prefix": "prefix"
+}

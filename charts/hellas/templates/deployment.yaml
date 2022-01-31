@@ -18,6 +18,10 @@ spec:
     metadata:
       labels:
         {{- include "hellas.selectorLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/tls: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -28,6 +32,18 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
+          env:
+            - name: MODULE_REGISTRY_TYPE
+              value: {{ .Values.moduleRegistryType | lower }}
+            - name: CONFIG
+              value: "/config/config.json"
+            {{- if .Values.github.token }}
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hellas.fullname" . }}
+                  key: token
+            {{- end }}
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:
@@ -52,17 +68,22 @@ spec:
               containerPort: 8443
               protocol: TCP
           volumeMounts:
-            - name: hellas
-              mountPath: "/app"
+            - name: config
+              mountPath: "/config"
+              readOnly: true
+            - name: tls
+              mountPath: "/tls"
               readOnly: true
       volumes:
-        - name: hellas
+        - name: tls
           secret:
-            secretName: {{ include "hellas.fullname" . }}
+            secretName: {{ include "hellas.fullname" . }}-tls
+        - name: config
+          configMap:
+            name: {{ include "hellas.fullname" . }}
       {{- if .Values.tolerations }}
       tolerations: {{- toYaml .Values.tolerations | nindent 8}}
       {{- end }}
       {{- if .Values.affinity }}
       affinity: {{- toYaml .Values.affinity | nindent 8}}
       {{- end }}
-

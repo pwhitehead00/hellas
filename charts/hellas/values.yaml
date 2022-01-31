@@ -1,7 +1,13 @@
 replicaCount: 1
 
+moduleRegistryType: ""
 cert: ""
 key: ""
+
+github:
+  config:
+    insecureSkipVerify: false
+    protocol: https
 
 imageKey:
   repository: ironhalo/hellas
