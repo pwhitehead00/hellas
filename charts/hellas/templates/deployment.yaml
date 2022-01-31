@@ -32,7 +32,12 @@ spec:
             - name: MODULE_REGISTRY_TYPE
               value: {{ .Values.moduleRegistryType | lower }}
             - name: CONFIG
-              value: "/app/config.json"
+              value: "/config/config.json"
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "hellas.fullname" . }}
+                  key: token
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:
@@ -57,36 +62,22 @@ spec:
               containerPort: 8443
               protocol: TCP
           volumeMounts:
-            - name: app
-              mountPath: "/app"
+            - name: config
+              mountPath: "/config"
               readOnly: true
-      initContainers:
-        - name: copy
-          image: alpine:latest
-          volumeMounts:
-          - name: secret
-            mountPath: /secret
-          - name: config
-            mountPath: /config
-          - name: app
-            mountPath: /app
-          command:
-          - "sh"
-          - "-c"
-          - "cp -v /secret/* /config/* /app"
+            - name: tls
+              mountPath: "/tls"
+              readOnly: true
       volumes:
-        - name: secret
+        - name: tls
           secret:
-            secretName: {{ include "hellas.fullname" . }}
+            secretName: {{ include "hellas.fullname" . }}-tls
         - name: config
           configMap:
             name: {{ include "hellas.fullname" . }}
-        - name: app
-          emptyDir: {}
       {{- if .Values.tolerations }}
       tolerations: {{- toYaml .Values.tolerations | nindent 8}}
       {{- end }}
       {{- if .Values.affinity }}
       affinity: {{- toYaml .Values.affinity | nindent 8}}
       {{- end }}
-

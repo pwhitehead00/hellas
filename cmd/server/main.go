@@ -28,5 +28,5 @@ func main() {
 	}
 
 	r := setupRouter(moduleType)
-	r.RunTLS(":8443", "/app/server.crt", "/app/server.key")
+	r.RunTLS(":8443", "/tls/tls.crt", "/tls/tls.key")
 }
