@@ -1,7 +1,7 @@
 package moduleregistry
 
 import (
-	"github.com/ironhalo/hellas/models"
+	"github.com/ironhalo/hellas/internal/models"
 )
 
 type Registry interface {
