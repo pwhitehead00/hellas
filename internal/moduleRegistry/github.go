@@ -10,7 +10,7 @@ import (
 	"os"
 
 	"github.com/google/go-github/v40/github"
-	"github.com/ironhalo/hellas/models"
+	"github.com/ironhalo/hellas/internal/models"
 	"golang.org/x/oauth2"
 )
 
