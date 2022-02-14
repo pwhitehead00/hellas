@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	api "github.com/ironhalo/hellas/internal/api"
 	v1 "github.com/ironhalo/hellas/internal/api/v1"
+	"github.com/ironhalo/hellas/internal/logging"
 	"github.com/ironhalo/hellas/internal/models"
 	moduleregistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
@@ -30,7 +31,15 @@ func newMRConfig(c string) (*models.ModuleRegistry, error) {
 
 func setupRouter(moduleType string, mr models.ModuleRegistry) *gin.Engine {
 	registry := moduleregistry.NewModuleRegistry(moduleType, mr)
-	r := gin.Default()
+	r := gin.New()
+
+	c := gin.LoggerConfig{
+		SkipPaths: []string{"/healthcheck", "/.well-known/terraform.json"},
+		Formatter: gin.LogFormatter(func(param gin.LogFormatterParams) string {
+			return logging.Logger(param)
+		}),
+	}
+	r.Use(gin.LoggerWithConfig(c), gin.Recovery())
 
 	v1.ModuleRegistryGroup(r, registry)
 	api.HealthCheck(r)
