@@ -16,3 +16,9 @@ type ModuleProviderVersions struct {
 type ModuleVersion struct {
 	Version string `json:"version"`
 }
+
+type ModuleRegistry struct {
+	InsecureSkipVerify bool
+	Protocol           string
+	Prefix             string
+}

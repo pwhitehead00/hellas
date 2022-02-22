@@ -3,7 +3,6 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,43 +15,12 @@ import (
 
 type GitHubClient struct {
 	Client *github.Client
-	Config *GitHubConfig
+	Config *models.ModuleRegistry
 }
 
-type GitHubConfig struct {
-	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
-	Protocol           string `json:"protocol"`
-	Prefix             string `json:"prefix"`
-}
-
-func initConfig(configFile string) (*GitHubConfig, error) {
-	var config GitHubConfig
-
-	file, err := os.ReadFile(configFile)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(file, &config)
-	if err != nil {
-		return nil, err
-	}
-
-	if config.Protocol != "https" && config.Protocol != "ssh" {
-		log.Fatalf("Invalid protocol: %s", config.Protocol)
-	}
-
-	return &config, nil
-}
-
-func NewGitHubClient(configFile string) Registry {
-	config, err := initConfig(configFile)
-	if err != nil {
-		log.Fatalf("Failed to initialize github config: %s", err)
-	}
-
+func NewGitHubClient(mr models.ModuleRegistry) Registry {
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: mr.InsecureSkipVerify},
 	}
 
 	sslcli := &http.Client{Transport: tr}
@@ -67,7 +35,7 @@ func NewGitHubClient(configFile string) Registry {
 
 		return &GitHubClient{
 			Client: client,
-			Config: config,
+			Config: &mr,
 		}
 	}
 
@@ -81,7 +49,7 @@ func NewGitHubClient(configFile string) Registry {
 
 	return &GitHubClient{
 		Client: client,
-		Config: config,
+		Config: &mr,
 	}
 }
 
