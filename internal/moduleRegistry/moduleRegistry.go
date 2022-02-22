@@ -10,10 +10,10 @@ type Registry interface {
 	Download(namespace, name, provider, version string) string
 }
 
-func NewModuleRegistry(registryType string) (r Registry) {
+func NewModuleRegistry(registryType string, mr models.ModuleRegistry) (r Registry) {
 	switch registryType {
 	case "github":
-		r = NewGitHubClient("/config/config.json")
+		r = NewGitHubClient(mr)
 	default:
 		panic("unsupported registy type")
 	}
