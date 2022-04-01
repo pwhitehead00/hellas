@@ -18,7 +18,12 @@ type ModuleVersion struct {
 }
 
 type ModuleRegistry struct {
-	InsecureSkipVerify bool
-	Protocol           string
-	Prefix             string
+	InsecureSkipVerify bool   `json:"insecureSkipVerify"`
+	Protocol           string `json:"protocol"`
+	Prefix             string `json:"prefix"`
+}
+
+type Config struct {
+	ModuleBackend  string         `json:"moduleBackend"`
+	ModuleRegistry ModuleRegistry `json:"moduleRegistry"`
 }

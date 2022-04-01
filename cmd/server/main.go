@@ -29,17 +29,34 @@ func newMRConfig(c string) (*models.ModuleRegistry, error) {
 	return &mr, nil
 }
 
-func setupRouter(moduleType string, mr models.ModuleRegistry) *gin.Engine {
-	registry := moduleregistry.NewModuleRegistry(moduleType, mr)
-	r := gin.New()
+func newConfig() (*models.Config, error) {
+	var config models.Config
+	raw := `{
+		"moduleBackend": "github",
+		"moduleRegistry": {
+			"insecureSkipVerify": true,
+			"prefix": "terraform",
+			"protocol": "https"
+		}
+	}`
 
-	c := gin.LoggerConfig{
+	err := json.Unmarshal([]byte(raw), &config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
+}
+
+func newRouter(c *models.Config) *gin.Engine {
+	registry := moduleregistry.NewModuleRegistry(c.ModuleBackend, c.ModuleRegistry)
+	r := gin.New()
+	l := gin.LoggerConfig{
 		SkipPaths: []string{"/healthcheck", "/.well-known/terraform.json"},
 		Formatter: gin.LogFormatter(func(param gin.LogFormatterParams) string {
 			return logging.Logger(param)
 		}),
 	}
-	r.Use(gin.LoggerWithConfig(c), gin.Recovery())
+	r.Use(gin.LoggerWithConfig(l), gin.Recovery())
 
 	v1.ModuleRegistryGroup(r, registry)
 	api.HealthCheck(r)
@@ -49,16 +66,11 @@ func setupRouter(moduleType string, mr models.ModuleRegistry) *gin.Engine {
 }
 
 func main() {
-	moduleType, ok := os.LookupEnv("MODULE_REGISTRY_TYPE")
-	if !ok {
-		log.Fatal("MODULE_REGISTRY_TYPE not set")
-	}
-
-	mrConfig, err := newMRConfig("/config/config.json")
+	c, err := newConfig()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
+	r := newRouter(c)
 
-	r := setupRouter(moduleType, *mrConfig)
 	r.RunTLS(":8443", "/tls/tls.crt", "/tls/tls.key")
 }
