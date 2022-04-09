@@ -29,16 +29,15 @@ func newMRConfig(c string) (*models.ModuleRegistry, error) {
 	return &mr, nil
 }
 
-func newConfig() (*models.Config, error) {
+func newConfig(c string) (*models.Config, error) {
 	var config models.Config
-	raw := `
-	{
-		"moduleBackend": "github",
-		"moduleRegistry": {"insecureSkipVerify":true,"prefix":"terraform","protocol":"https"}
-	}`
 
-	err := json.Unmarshal([]byte(raw), &config)
+	file, err := os.ReadFile(c)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(file, &config); err != nil {
 		return nil, err
 	}
 	return &config, nil
@@ -63,7 +62,7 @@ func newRouter(c *models.Config) *gin.Engine {
 }
 
 func main() {
-	c, err := newConfig()
+	c, err := newConfig("/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
