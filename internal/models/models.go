@@ -24,6 +24,6 @@ type ModuleRegistry struct {
 }
 
 type Config struct {
-	ModuleBackend  string         `json:"moduleBackend"`
-	ModuleRegistry ModuleRegistry `json:"moduleRegistry"`
+	ModuleBackend  string          `json:"moduleBackend"`
+	ModuleRegistry *ModuleRegistry `json:"moduleRegistry"`
 }

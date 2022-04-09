@@ -33,11 +33,7 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           env:
-            - name: MODULE_REGISTRY_TYPE
-              value: {{ .Values.moduleRegistryType | lower }}
-            - name: CONFIG
-              value: "/config/config.json"
-            {{- if .Values.github.token }}
+            {{- if .Values.moduleRegistry.token }}
             - name: TOKEN
               valueFrom:
                 secretKeyRef:

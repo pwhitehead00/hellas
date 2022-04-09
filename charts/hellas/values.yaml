@@ -4,10 +4,9 @@ moduleRegistryType: ""
 cert: ""
 key: ""
 
-github:
-  config:
-    insecureSkipVerify: false
-    protocol: https
+moduleRegistry:
+  insecureSkipVerify: false
+  protocol: https
 
 imageKey:
   repository: ironhalo/hellas

@@ -31,13 +31,10 @@ func newMRConfig(c string) (*models.ModuleRegistry, error) {
 
 func newConfig() (*models.Config, error) {
 	var config models.Config
-	raw := `{
+	raw := `
+	{
 		"moduleBackend": "github",
-		"moduleRegistry": {
-			"insecureSkipVerify": true,
-			"prefix": "terraform",
-			"protocol": "https"
-		}
+		"moduleRegistry": {"insecureSkipVerify":true,"prefix":"terraform","protocol":"https"}
 	}`
 
 	err := json.Unmarshal([]byte(raw), &config)
@@ -48,7 +45,7 @@ func newConfig() (*models.Config, error) {
 }
 
 func newRouter(c *models.Config) *gin.Engine {
-	registry := moduleregistry.NewModuleRegistry(c.ModuleBackend, c.ModuleRegistry)
+	registry := moduleregistry.NewModuleRegistry(c.ModuleBackend, *c.ModuleRegistry)
 	r := gin.New()
 	l := gin.LoggerConfig{
 		SkipPaths: []string{"/healthcheck", "/.well-known/terraform.json"},
