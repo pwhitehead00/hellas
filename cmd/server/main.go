@@ -1,12 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	api "github.com/ironhalo/hellas/internal/api"
@@ -67,19 +72,47 @@ func newRouter(c *models.Config) (*gin.Engine, error) {
 }
 
 func main() {
+	gin.SetMode(gin.ReleaseMode)
+
 	file, err := reader("/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	c, err := newConfig(file)
+	config, err := newConfig(file)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	r, err := newRouter(c)
+	router, err := newRouter(config)
 	if err != nil {
 		log.Fatal(err)
 	}
-	r.RunTLS(":8443", "/tls/tls.crt", "/tls/tls.key")
+
+	router.SetTrustedProxies(nil)
+
+	srv := &http.Server{
+		Addr:    ":8443",
+		Handler: router,
+	}
+
+	go func() {
+		if err := srv.ListenAndServeTLS("/tls/tls.crt", "/tls/tls.key"); err != nil && errors.Is(err, http.ErrServerClosed) {
+			log.Printf("listen: %s\n", err)
+		}
+	}()
+
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown:", err)
+	}
+
+	log.Println("Server exiting")
 }
