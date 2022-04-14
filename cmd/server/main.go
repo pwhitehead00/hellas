@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	api "github.com/ironhalo/hellas/internal/api"
@@ -13,33 +16,30 @@ import (
 	moduleregistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
 
-func newMRConfig(c string) (*models.ModuleRegistry, error) {
-	var mr models.ModuleRegistry
-
-	file, err := os.ReadFile(c)
+func reader(f string) ([]byte, error) {
+	file, err := os.ReadFile(f)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(file, &mr)
-	if err != nil {
-		return nil, err
-	}
-
-	return &mr, nil
+	return file, nil
 }
 
-func newConfig(c string) (*models.Config, error) {
+// Create a new config file
+func newConfig(c []byte) (*models.Config, error) {
 	var config models.Config
 
-	file, err := os.ReadFile(c)
-	if err != nil {
+	if err := json.Unmarshal(c, &config); err != nil {
 		return nil, err
 	}
 
-	if err := json.Unmarshal(file, &config); err != nil {
-		return nil, err
+	config.ModuleBackend = strings.ToLower(config.ModuleBackend)
+	config.ModuleRegistry.Protocol = strings.ToLower(config.ModuleRegistry.Protocol)
+
+	if config.ModuleRegistry.Protocol != "https" && config.ModuleRegistry.Protocol != "ssh" {
+		return nil, errors.New(fmt.Sprintf("Invalid protocol: %s", config.ModuleRegistry.Protocol))
 	}
+
 	return &config, nil
 }
 
@@ -62,11 +62,16 @@ func newRouter(c *models.Config) *gin.Engine {
 }
 
 func main() {
-	c, err := newConfig("/config/config.json")
+	file, err := reader("/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
-	r := newRouter(c)
 
+	c, err := newConfig(file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := newRouter(c)
 	r.RunTLS(":8443", "/tls/tls.crt", "/tls/tls.key")
 }
