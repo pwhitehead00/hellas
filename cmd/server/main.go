@@ -25,7 +25,7 @@ func reader(f string) ([]byte, error) {
 	return file, nil
 }
 
-// Create a new config file
+// Create and validate a new instance of models.config
 func newConfig(c []byte) (*models.Config, error) {
 	var config models.Config
 
@@ -43,8 +43,13 @@ func newConfig(c []byte) (*models.Config, error) {
 	return &config, nil
 }
 
-func newRouter(c *models.Config) *gin.Engine {
-	registry := moduleregistry.NewModuleRegistry(c.ModuleBackend, *c.ModuleRegistry)
+// Create a new gin Engine
+func newRouter(c *models.Config) (*gin.Engine, error) {
+	registry, err := moduleregistry.NewModuleRegistry(c.ModuleBackend, *c.ModuleRegistry)
+	if err != nil {
+		return nil, err
+	}
+
 	r := gin.New()
 	l := gin.LoggerConfig{
 		SkipPaths: []string{"/healthcheck", "/.well-known/terraform.json"},
@@ -58,7 +63,7 @@ func newRouter(c *models.Config) *gin.Engine {
 	api.HealthCheck(r)
 	api.WellKnown(r)
 
-	return r
+	return r, nil
 }
 
 func main() {
@@ -72,6 +77,9 @@ func main() {
 		log.Fatal(err)
 	}
 
-	r := newRouter(c)
+	r, err := newRouter(c)
+	if err != nil {
+		log.Fatal(err)
+	}
 	r.RunTLS(":8443", "/tls/tls.crt", "/tls/tls.key")
 }
