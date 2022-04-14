@@ -3,7 +3,7 @@ key: LS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tCk1JSUV2UUlCQURBTkJna3Foa2lHOXcwQkFRRUZ
 
 moduleRegistryType: github
 
-github:
-  config:
-    insecureSkipVerify: true
-    prefix: terraform
+moduleRegistry:
+  insecureSkipVerify: true
+  prefix: terraform
+  protocol: https
