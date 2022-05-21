@@ -3,6 +3,7 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -119,4 +120,13 @@ func (gh *GitHubClient) Download(namespace, name, provider, version string) stri
 	}
 	return fmt.Sprintf("git::%s://github.com/%s/%s-%s-%s?ref=v%s", gh.Config.Protocol, namespace, gh.Config.Prefix, provider, name, version)
 
+}
+
+// Validate GitHub client
+func (gh *GitHubClient) validate() error {
+	if gh.Config.Protocol != "https" && gh.Config.Protocol != "ssh" {
+		return errors.New(fmt.Sprintf("Invalid protocol: %s", gh.Config.Protocol))
+	}
+
+	return nil
 }

@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
@@ -30,19 +28,12 @@ func reader(f string) ([]byte, error) {
 	return file, nil
 }
 
-// Create and validate a new instance of models.config
+// Create and validate a new instance of models.Config
 func newConfig(c []byte) (*models.Config, error) {
 	var config models.Config
 
 	if err := json.Unmarshal(c, &config); err != nil {
 		return nil, err
-	}
-
-	config.ModuleBackend = strings.ToLower(config.ModuleBackend)
-	config.ModuleRegistry.Protocol = strings.ToLower(config.ModuleRegistry.Protocol)
-
-	if config.ModuleRegistry.Protocol != "https" && config.ModuleRegistry.Protocol != "ssh" {
-		return nil, errors.New(fmt.Sprintf("Invalid protocol: %s", config.ModuleRegistry.Protocol))
 	}
 
 	return &config, nil
