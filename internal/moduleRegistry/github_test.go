@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/google/go-github/v40/github"
+	"github.com/google/go-github/v44/github"
 	"github.com/ironhalo/hellas/internal/models"
 	"github.com/stretchr/testify/assert"
 )
