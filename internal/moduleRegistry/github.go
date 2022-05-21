@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/google/go-github/v40/github"
+	"github.com/google/go-github/v44/github"
 	"github.com/ironhalo/hellas/internal/models"
 	"golang.org/x/oauth2"
 )
