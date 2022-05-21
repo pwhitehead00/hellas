@@ -2,6 +2,7 @@ package moduleregistry
 
 import (
 	"crypto/tls"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -114,5 +115,20 @@ func TestGitHubVersions(t *testing.T) {
 		c := NewGitHubClient(mr)
 		actual := c.Versions("my-namespace", "name", "provider", []string{"1.0.0", "1.0.1"})
 		assert.Equal(t, expected, actual, "GitHub Versions should be the same")
+	})
+}
+
+func TestGitHubValidation(t *testing.T) {
+	t.Run("Github: Invalid Protocol", func(t *testing.T) {
+		mr := models.ModuleRegistry{
+			InsecureSkipVerify: false,
+			Protocol:           "foo",
+			Prefix:             "prefix",
+		}
+
+		c := NewGitHubClient(mr)
+		err := c.validate()
+
+		assert.Equal(t, errors.New("Invalid protocol: foo"), err)
 	})
 }
