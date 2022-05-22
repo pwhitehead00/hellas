@@ -20,7 +20,7 @@ deploy:
       - name: hellas
         chartPath: charts/hellas
         valuesFiles:
-          - ./test/values-skaffold.yaml
+          - ./test/values-gitlab.yaml
         artifactOverrides:
           imageKey: ironhalo/hellas
         imageStrategy:

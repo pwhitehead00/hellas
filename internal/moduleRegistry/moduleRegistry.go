@@ -24,6 +24,13 @@ func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 		}
 
 		r = NewGitHubRegistry(c)
+	case "gitlab":
+		c, err := newGitLabConfig(config)
+		if err != nil {
+			return nil, err
+		}
+
+		r = NewGitLabRegistry(c)
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}

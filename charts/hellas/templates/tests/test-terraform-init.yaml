@@ -58,7 +58,11 @@ metadata:
 data:
   main.tf: |
     module "hellas_vpc" {
-      source  = "hellas.default/terraform-aws-modules/vpc/aws"
-      version = "3.11.0"
+      # source  = "hellas.default/terraform-aws-modules/vpc/aws"
+      # version = "3.11.0"
+      source  = "hellas.default/terraform-modules/gke/google"
+      version = "12.1.0"
       # insert the 21 required variables here
     }
+
+# gitlab-com/gl-infra/terraform-modules/google/gke
