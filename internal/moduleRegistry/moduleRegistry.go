@@ -14,14 +14,22 @@ type Registry interface {
 	validate() error
 }
 
-func NewModuleRegistry(registryType string, mr models.ModuleRegistry) (Registry, error) {
+func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 	var r Registry
 
-	switch registryType {
+	switch *registryType {
 	case "github":
-		r = NewGitHubRegistry(mr)
+		c, err := newGitHubConfig(config)
+		if err != nil {
+			return nil, err
+		}
+
+		r, err = NewGitHubRegistry(c)
+		if err != nil {
+			return nil, err
+		}
 	default:
-		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", registryType))
+		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}
 
 	if err := r.validate(); err != nil {

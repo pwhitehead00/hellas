@@ -3,6 +3,7 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -16,12 +17,30 @@ import (
 
 type GitHubRegistry struct {
 	Client *github.Client
-	Config *models.ModuleRegistry
+	Config *gitHubConfig
 }
 
-func NewGitHubRegistry(mr models.ModuleRegistry) Registry {
+type gitHubConfig struct {
+	InsecureSkipVerify bool
+	Protocol           string
+	Prefix             string
+}
+
+func newGitHubConfig(file []byte) (*gitHubConfig, error) {
+	var config gitHubConfig
+
+	if err := json.Unmarshal(file, &config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}
+
+// New GitHub module registry
+func NewGitHubRegistry(config *gitHubConfig) (Registry, error) {
+
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: mr.InsecureSkipVerify},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
 	}
 
 	sslcli := &http.Client{Transport: tr}
@@ -36,8 +55,8 @@ func NewGitHubRegistry(mr models.ModuleRegistry) Registry {
 
 		return &GitHubRegistry{
 			Client: client,
-			Config: &mr,
-		}
+			Config: config,
+		}, nil
 	}
 
 	log.Println("Token found, using authenticated GitHub client")
@@ -50,8 +69,8 @@ func NewGitHubRegistry(mr models.ModuleRegistry) Registry {
 
 	return &GitHubRegistry{
 		Client: client,
-		Config: &mr,
-	}
+		Config: config,
+	}, nil
 }
 
 func repo(prefix, provider, name string) string {

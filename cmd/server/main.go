@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
+	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -15,7 +15,6 @@ import (
 	api "github.com/ironhalo/hellas/internal/api"
 	v1 "github.com/ironhalo/hellas/internal/api/v1"
 	"github.com/ironhalo/hellas/internal/logging"
-	"github.com/ironhalo/hellas/internal/models"
 	moduleregistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
 
@@ -28,54 +27,41 @@ func reader(f string) ([]byte, error) {
 	return file, nil
 }
 
-// Create and validate a new instance of models.Config
-func newConfig(c []byte) (*models.Config, error) {
-	var config models.Config
-
-	if err := json.Unmarshal(c, &config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
 // Create a new gin Engine
-func newRouter(c *models.Config) (*gin.Engine, error) {
-	registry, err := moduleregistry.NewModuleRegistry(c.ModuleBackend, *c.ModuleRegistry)
-	if err != nil {
-		return nil, err
-	}
-
-	r := gin.New()
+func newRouter(r moduleregistry.Registry) (*gin.Engine, error) {
+	g := gin.New()
 	l := gin.LoggerConfig{
 		SkipPaths: []string{"/healthcheck", "/.well-known/terraform.json"},
 		Formatter: gin.LogFormatter(func(param gin.LogFormatterParams) string {
 			return logging.Logger(param)
 		}),
 	}
-	r.Use(gin.LoggerWithConfig(l), gin.Recovery())
+	g.Use(gin.LoggerWithConfig(l), gin.Recovery())
 
-	v1.ModuleRegistryGroup(r, registry)
-	api.HealthCheck(r)
-	api.WellKnown(r)
+	v1.ModuleRegistryGroup(g, r)
+	api.HealthCheck(g)
+	api.WellKnown(g)
 
-	return r, nil
+	return g, nil
 }
 
 func main() {
+	mrBackend := flag.String("module-registry-backend", "", "Terraform module registry backend")
+	flag.Parse()
+
 	gin.SetMode(gin.ReleaseMode)
 
-	file, err := reader("/config/config.json")
+	mrConfig, err := reader("/config/config.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	config, err := newConfig(file)
+	registry, err := moduleregistry.NewModuleRegistry(mrBackend, mrConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	router, err := newRouter(config)
+	router, err := newRouter(registry)
 	if err != nil {
 		log.Fatal(err)
 	}

@@ -7,13 +7,13 @@ build:
     - image: ironhalo/hellas
       docker:
         dockerfile: cmd/server/Dockerfile
-test:
-  - image: ironhalo/hellas
-    custom:
-      - command: "go test -v ./..."
-        dependencies:
-          paths:
-            - "./**/*.go"
+# test:
+#   - image: ironhalo/hellas
+#     custom:
+#       - command: "go test -v ./..."
+#         dependencies:
+#           paths:
+#             - "./**/*.go"
 deploy:
   helm:
     releases:
