@@ -19,7 +19,7 @@ func NewModuleRegistry(registryType string, mr models.ModuleRegistry) (Registry,
 
 	switch registryType {
 	case "github":
-		r = NewGitHubClient(mr)
+		r = NewGitHubRegistry(mr)
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", registryType))
 	}

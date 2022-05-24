@@ -15,7 +15,7 @@ func TestModuleRegistry(t *testing.T) {
 		Prefix:             "prefix",
 	}
 	t.Run("GitHub registry", func(t *testing.T) {
-		expected := NewGitHubClient(mr)
+		expected := NewGitHubRegistry(mr)
 		actual, _ := NewModuleRegistry("github", mr)
 
 		assert.Equal(t, expected, actual, "Registry type should be of type github")

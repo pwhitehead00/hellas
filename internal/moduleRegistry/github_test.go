@@ -21,7 +21,7 @@ func TestGitHubDownload(t *testing.T) {
 
 		expected := "git::https://github.com/my-namespace/prefix-happycloud-module?ref=v3.11.0"
 
-		c := NewGitHubClient(mr)
+		c := NewGitHubRegistry(mr)
 		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
@@ -34,7 +34,7 @@ func TestGitHubDownload(t *testing.T) {
 
 		expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
 
-		c := NewGitHubClient(mr)
+		c := NewGitHubRegistry(mr)
 		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
@@ -52,7 +52,7 @@ func TestGitHubClient(t *testing.T) {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
 		c := &http.Client{Transport: tr}
-		expected := &GitHubClient{
+		expected := &GitHubRegistry{
 			Client: github.NewClient(c),
 			Config: &models.ModuleRegistry{
 				InsecureSkipVerify: true,
@@ -61,7 +61,7 @@ func TestGitHubClient(t *testing.T) {
 			},
 		}
 
-		actual := NewGitHubClient(mr)
+		actual := NewGitHubRegistry(mr)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 	t.Run("Github Client Secure TLS", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGitHubClient(t *testing.T) {
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 		}
 		c := &http.Client{Transport: tr}
-		expected := &GitHubClient{
+		expected := &GitHubRegistry{
 			Client: github.NewClient(c),
 			Config: &models.ModuleRegistry{
 				InsecureSkipVerify: false,
@@ -83,7 +83,7 @@ func TestGitHubClient(t *testing.T) {
 			},
 		}
 
-		actual := NewGitHubClient(mr)
+		actual := NewGitHubRegistry(mr)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 }
@@ -112,7 +112,7 @@ func TestGitHubVersions(t *testing.T) {
 			},
 		}
 
-		c := NewGitHubClient(mr)
+		c := NewGitHubRegistry(mr)
 		actual := c.Versions("my-namespace", "name", "provider", []string{"1.0.0", "1.0.1"})
 		assert.Equal(t, expected, actual, "GitHub Versions should be the same")
 	})
@@ -126,7 +126,7 @@ func TestGitHubValidation(t *testing.T) {
 			Prefix:             "prefix",
 		}
 
-		c := NewGitHubClient(mr)
+		c := NewGitHubRegistry(mr)
 		err := c.validate()
 
 		assert.Equal(t, errors.New("Invalid protocol: foo"), err)

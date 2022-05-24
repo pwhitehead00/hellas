@@ -14,12 +14,12 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type GitHubClient struct {
+type GitHubRegistry struct {
 	Client *github.Client
 	Config *models.ModuleRegistry
 }
 
-func NewGitHubClient(mr models.ModuleRegistry) Registry {
+func NewGitHubRegistry(mr models.ModuleRegistry) Registry {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: mr.InsecureSkipVerify},
 	}
@@ -34,7 +34,7 @@ func NewGitHubClient(mr models.ModuleRegistry) Registry {
 		tc := oauth2.NewClient(ctx, nil)
 		client := github.NewClient(tc)
 
-		return &GitHubClient{
+		return &GitHubRegistry{
 			Client: client,
 			Config: &mr,
 		}
@@ -48,7 +48,7 @@ func NewGitHubClient(mr models.ModuleRegistry) Registry {
 	tc := oauth2.NewClient(ctx, ts)
 	client := github.NewClient(tc)
 
-	return &GitHubClient{
+	return &GitHubRegistry{
 		Client: client,
 		Config: &mr,
 	}
@@ -62,7 +62,7 @@ func repo(prefix, provider, name string) string {
 	return fmt.Sprintf("%s-%s-%s", prefix, provider, name)
 }
 
-func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string, error) {
+func (gh *GitHubRegistry) GetVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
 
@@ -91,7 +91,7 @@ func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string,
 	return versions, nil
 }
 
-func (gh *GitHubClient) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
+func (gh *GitHubRegistry) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
 	var m models.ModuleVersions
 	var mv []*models.ModuleVersion
 
@@ -114,7 +114,7 @@ func (gh *GitHubClient) Versions(namespace, name, provider string, version []str
 	return m
 }
 
-func (gh *GitHubClient) Download(namespace, name, provider, version string) string {
+func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {
 	if gh.Config.Prefix == "" {
 		return fmt.Sprintf("git::%s://github.com/%s/%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
 	}
@@ -123,7 +123,7 @@ func (gh *GitHubClient) Download(namespace, name, provider, version string) stri
 }
 
 // Validate GitHub client
-func (gh *GitHubClient) validate() error {
+func (gh *GitHubRegistry) validate() error {
 	if gh.Config.Protocol != "https" && gh.Config.Protocol != "ssh" {
 		return errors.New(fmt.Sprintf("Invalid protocol: %s", gh.Config.Protocol))
 	}
