@@ -73,6 +73,7 @@ func NewGitHubRegistry(config *gitHubConfig) (Registry, error) {
 	}, nil
 }
 
+// TODO: Should be a method on the gitHubConfig
 func repo(prefix, provider, name string) string {
 	if prefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)
@@ -81,6 +82,7 @@ func repo(prefix, provider, name string) string {
 	return fmt.Sprintf("%s-%s-%s", prefix, provider, name)
 }
 
+// TODO: Rename for better clarity
 func (gh *GitHubRegistry) GetVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
@@ -110,6 +112,8 @@ func (gh *GitHubRegistry) GetVersions(namespace, name, provider string) ([]strin
 	return versions, nil
 }
 
+// TODO: Nothing here is specific to github, move elsewhere for reuse and remove from the registry interface
+// TODO: Rename for better clarity
 func (gh *GitHubRegistry) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
 	var m models.ModuleVersions
 	var mv []*models.ModuleVersion
@@ -138,7 +142,6 @@ func (gh *GitHubRegistry) Download(namespace, name, provider, version string) st
 		return fmt.Sprintf("git::%s://github.com/%s/%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
 	}
 	return fmt.Sprintf("git::%s://github.com/%s/%s-%s-%s?ref=v%s", gh.Config.Protocol, namespace, gh.Config.Prefix, provider, name, version)
-
 }
 
 // Validate GitHub client
