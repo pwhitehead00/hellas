@@ -1,23 +1,36 @@
 package moduleregistry
 
 import (
+	"encoding/json"
+	"errors"
 	"testing"
 
-	"github.com/ironhalo/hellas/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestModuleRegistry(t *testing.T) {
-	t.Skip()
-	mr := models.ModuleRegistry{
-		InsecureSkipVerify: true,
-		Protocol:           "https",
-		Prefix:             "prefix",
-	}
 	t.Run("GitHub registry", func(t *testing.T) {
-		expected := NewGitHubRegistry(mr)
-		actual, _ := NewModuleRegistry("github", mr)
+		rt := "github"
 
-		assert.Equal(t, expected, actual, "Registry type should be of type github")
+		config := json.RawMessage(`{"insecureSkipVerify":true,"prefix":"prefix","protocol":"https"}`)
+		actual, _ := NewModuleRegistry(&rt, config)
+
+		c := &gitHubConfig{
+			InsecureSkipVerify: true,
+			Prefix:             "prefix",
+			Protocol:           "https",
+		}
+		expected, _ := NewGitHubRegistry(c)
+		assert.Equal(t, expected, actual)
+	})
+
+	t.Run("Bad registry", func(t *testing.T) {
+		rt := "foobar"
+
+		config := json.RawMessage(`{""}`)
+		actual, err := NewModuleRegistry(&rt, config)
+
+		assert.Equal(t, nil, actual)
+		assert.Equal(t, errors.New("Unsupported registy type: foobar"), err)
 	})
 }

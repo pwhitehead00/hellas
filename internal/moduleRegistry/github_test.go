@@ -13,89 +13,83 @@ import (
 
 func TestGitHubDownload(t *testing.T) {
 	t.Run("Github Download Source with Prefix", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: false,
-			Protocol:           "https",
-			Prefix:             "prefix",
+		c := &gitHubConfig{
+			Protocol: "https",
+			Prefix:   "prefix",
 		}
+
+		r, _ := NewGitHubRegistry(c)
+		actual := r.Download("my-namespace", "module", "happycloud", "3.11.0")
 
 		expected := "git::https://github.com/my-namespace/prefix-happycloud-module?ref=v3.11.0"
-
-		c := NewGitHubRegistry(mr)
-		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
+
 	t.Run("Github Download Source without Prefix", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: false,
-			Protocol:           "https",
-			Prefix:             "",
+		c := &gitHubConfig{
+			Protocol: "https",
 		}
 
-		expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
+		r, _ := NewGitHubRegistry(c)
+		actual := r.Download("my-namespace", "module", "happycloud", "3.11.0")
 
-		c := NewGitHubRegistry(mr)
-		actual := c.Download("my-namespace", "module", "happycloud", "3.11.0")
+		expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
 }
 
 func TestGitHubClient(t *testing.T) {
 	t.Run("Github Client Insecure TLS", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: true,
-			Protocol:           "https",
-			Prefix:             "prefix",
-		}
-
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		}
-		c := &http.Client{Transport: tr}
+		client := &http.Client{Transport: tr}
 		expected := &GitHubRegistry{
-			Client: github.NewClient(c),
-			Config: &models.ModuleRegistry{
+			Client: github.NewClient(client),
+			Config: &gitHubConfig{
 				InsecureSkipVerify: true,
 				Protocol:           "https",
 				Prefix:             "prefix",
 			},
 		}
 
-		actual := NewGitHubRegistry(mr)
-		assert.Equal(t, expected, actual, "Github clients should be equal")
-	})
-	t.Run("Github Client Secure TLS", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: false,
+		c := &gitHubConfig{
+			InsecureSkipVerify: true,
 			Protocol:           "https",
 			Prefix:             "prefix",
 		}
+
+		actual, _ := NewGitHubRegistry(c)
+		assert.Equal(t, expected, actual, "Github clients should be equal")
+	})
+
+	t.Run("Github Client Secure TLS", func(t *testing.T) {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 		}
-		c := &http.Client{Transport: tr}
+		client := &http.Client{Transport: tr}
 		expected := &GitHubRegistry{
-			Client: github.NewClient(c),
-			Config: &models.ModuleRegistry{
+			Client: github.NewClient(client),
+			Config: &gitHubConfig{
 				InsecureSkipVerify: false,
 				Protocol:           "https",
 				Prefix:             "prefix",
 			},
 		}
 
-		actual := NewGitHubRegistry(mr)
+		c := &gitHubConfig{
+			InsecureSkipVerify: false,
+			Protocol:           "https",
+			Prefix:             "prefix",
+		}
+
+		actual, _ := NewGitHubRegistry(c)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 }
 
 func TestGitHubVersions(t *testing.T) {
 	t.Run("Github Versions", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: true,
-			Protocol:           "https",
-			Prefix:             "prefix",
-		}
-
 		expected := models.ModuleVersions{
 			Modules: []*models.ModuleProviderVersions{
 				{
@@ -112,22 +106,24 @@ func TestGitHubVersions(t *testing.T) {
 			},
 		}
 
-		c := NewGitHubRegistry(mr)
-		actual := c.Versions("my-namespace", "name", "provider", []string{"1.0.0", "1.0.1"})
+		c := &gitHubConfig{
+			Prefix: "prefix",
+		}
+
+		mr, _ := NewGitHubRegistry(c)
+		actual := mr.Versions("my-namespace", "name", "provider", []string{"1.0.0", "1.0.1"})
 		assert.Equal(t, expected, actual, "GitHub Versions should be the same")
 	})
 }
 
 func TestGitHubValidation(t *testing.T) {
 	t.Run("Github: Invalid Protocol", func(t *testing.T) {
-		mr := models.ModuleRegistry{
-			InsecureSkipVerify: false,
-			Protocol:           "foo",
-			Prefix:             "prefix",
+		c := &gitHubConfig{
+			Protocol: "foo",
 		}
 
-		c := NewGitHubRegistry(mr)
-		err := c.validate()
+		mr, _ := NewGitHubRegistry(c)
+		err := mr.validate()
 
 		assert.Equal(t, errors.New("Invalid protocol: foo"), err)
 	})
