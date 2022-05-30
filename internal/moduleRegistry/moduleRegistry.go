@@ -8,10 +8,11 @@ import (
 type Registry interface {
 	ListVersions(namespace, name, provider string) ([]string, error)
 	Download(namespace, name, provider, version string) string
-	Repo(provider, name string) string
+	Path(provider, name string) string
 	validate() error
 }
 
+// Build a new Registry interface
 func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 	var r Registry
 

@@ -6,6 +6,8 @@ import (
 	"github.com/ironhalo/hellas/internal/models"
 )
 
+// List available versions for a specific module
+// See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
 func Versions(namespace, name, provider, repo string, version []string) models.ModuleVersions {
 	var m models.ModuleVersions
 	var mv []*models.ModuleVersion

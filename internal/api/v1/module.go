@@ -7,6 +7,8 @@ import (
 	moduleRegistry "github.com/ironhalo/hellas/internal/moduleRegistry"
 )
 
+// This endpoint downloads the specified version of a module for a single provider
+// See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
 func download(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 	download := rg.Group("/modules")
 
@@ -23,6 +25,8 @@ func download(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 	})
 }
 
+// This is the primary endpoint for resolving module sources, returning the available versions for a given fully-qualified module
+// See https://www.terraform.io/internals/module-registry-protocol#list-available-versions-for-a-specific-module
 func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 	versions := rg.Group("/modules")
 
@@ -37,7 +41,7 @@ func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": err.Error()})
 		}
 
-		repo := mr.Repo(provider, name)
+		repo := mr.Path(provider, name)
 		o := moduleRegistry.Versions(namespace, name, provider, repo, versions)
 		c.JSON(http.StatusOK, o)
 	})

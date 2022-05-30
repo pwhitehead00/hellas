@@ -12,12 +12,12 @@ func TestModuleRegistry(t *testing.T) {
 	t.Run("GitHub registry", func(t *testing.T) {
 		rt := "github"
 
-		config := json.RawMessage(`{"insecureSkipVerify":true,"prefix":"prefix","protocol":"https"}`)
+		config := json.RawMessage(`{"insecureSkipVerify":true,"repoPrefix":"prefix","protocol":"https"}`)
 		actual, _ := NewModuleRegistry(&rt, config)
 
 		c := &gitHubConfig{
 			InsecureSkipVerify: true,
-			Prefix:             "prefix",
+			RepoPrefix:         "prefix",
 			Protocol:           "https",
 		}
 		expected, _ := NewGitHubRegistry(c)

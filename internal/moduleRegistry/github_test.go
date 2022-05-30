@@ -11,28 +11,16 @@ import (
 )
 
 func TestGitHubDownload(t *testing.T) {
-	t.Run("Github Download Source with Prefix", func(t *testing.T) {
+	t.Run("Github Download", func(t *testing.T) {
 		c := &gitHubConfig{
-			Protocol: "https",
-			Prefix:   "prefix",
+			Protocol:   "https",
+			RepoPrefix: "prefix",
 		}
 
 		r, _ := NewGitHubRegistry(c)
 		actual := r.Download("my-namespace", "module", "happycloud", "3.11.0")
 
 		expected := "git::https://github.com/my-namespace/prefix-happycloud-module?ref=v3.11.0"
-		assert.Equal(t, expected, actual, "Validate github download source")
-	})
-
-	t.Run("Github Download Source without Prefix", func(t *testing.T) {
-		c := &gitHubConfig{
-			Protocol: "https",
-		}
-
-		r, _ := NewGitHubRegistry(c)
-		actual := r.Download("my-namespace", "module", "happycloud", "3.11.0")
-
-		expected := "git::https://github.com/my-namespace/happycloud-module?ref=v3.11.0"
 		assert.Equal(t, expected, actual, "Validate github download source")
 	})
 }
@@ -48,14 +36,14 @@ func TestGitHubClient(t *testing.T) {
 			Config: &gitHubConfig{
 				InsecureSkipVerify: true,
 				Protocol:           "https",
-				Prefix:             "prefix",
+				RepoPrefix:         "repoPrefix",
 			},
 		}
 
 		c := &gitHubConfig{
 			InsecureSkipVerify: true,
 			Protocol:           "https",
-			Prefix:             "prefix",
+			RepoPrefix:         "repoPrefix",
 		}
 
 		actual, _ := NewGitHubRegistry(c)
@@ -72,14 +60,14 @@ func TestGitHubClient(t *testing.T) {
 			Config: &gitHubConfig{
 				InsecureSkipVerify: false,
 				Protocol:           "https",
-				Prefix:             "prefix",
+				RepoPrefix:         "repoPrefix",
 			},
 		}
 
 		c := &gitHubConfig{
 			InsecureSkipVerify: false,
 			Protocol:           "https",
-			Prefix:             "prefix",
+			RepoPrefix:         "repoPrefix",
 		}
 
 		actual, _ := NewGitHubRegistry(c)
@@ -100,23 +88,23 @@ func TestGitHubValidation(t *testing.T) {
 	})
 }
 
-func TestGitHubRepo(t *testing.T) {
-	t.Run("Repo: With Prefix", func(t *testing.T) {
+func TestGitHubPath(t *testing.T) {
+	t.Run("Path: With Repo Prefix", func(t *testing.T) {
 		c := &gitHubConfig{
-			Prefix: "prefix",
+			RepoPrefix: "prefix",
 		}
 
 		mr, _ := NewGitHubRegistry(c)
-		actual := mr.Repo("happycloud", "module")
+		actual := mr.Path("happycloud", "module")
 
 		assert.Equal(t, "prefix-happycloud-module", actual)
 	})
 
-	t.Run("Repo: Without Prefix", func(t *testing.T) {
+	t.Run("Path: Without Repo Prefix", func(t *testing.T) {
 		c := &gitHubConfig{}
 
 		mr, _ := NewGitHubRegistry(c)
-		actual := mr.Repo("happycloud", "module")
+		actual := mr.Path("happycloud", "module")
 
 		assert.Equal(t, "happycloud-module", actual)
 	})

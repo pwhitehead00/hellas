@@ -20,9 +20,15 @@ type GitHubRegistry struct {
 }
 
 type gitHubConfig struct {
-	InsecureSkipVerify bool
-	Protocol           string
-	Prefix             string
+	// Accept self signed certs
+	InsecureSkipVerify bool `json:"insecureSkipVerify"`
+
+	// The protocol used when checking out terraform modules.  Can be either
+	// https or ssh
+	Protocol string `json:"protocol"`
+
+	// A string prefix
+	RepoPrefix string `json:"repoPrefix"`
 }
 
 func newGitHubConfig(file []byte) (*gitHubConfig, error) {
@@ -72,14 +78,16 @@ func NewGitHubRegistry(config *gitHubConfig) (Registry, error) {
 	}, nil
 }
 
-func (gh *GitHubRegistry) Repo(provider, name string) string {
-	if gh.Config.Prefix == "" {
+// Helper function
+func (gh *GitHubRegistry) Path(provider, name string) string {
+	if gh.Config.RepoPrefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)
 	}
 
-	return fmt.Sprintf("%s-%s-%s", gh.Config.Prefix, provider, name)
+	return fmt.Sprintf("%s-%s-%s", gh.Config.RepoPrefix, provider, name)
 }
 
+// List all tags for a GitHub registry
 func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
@@ -88,7 +96,7 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 		PerPage: 100,
 	}
 
-	repo := gh.Repo(provider, name)
+	repo := gh.Path(provider, name)
 
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
@@ -109,11 +117,12 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 	return versions, nil
 }
 
+// Download source code for a specific module version
+// See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
 func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {
-	if gh.Config.Prefix == "" {
-		return fmt.Sprintf("git::%s://github.com/%s/%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
-	}
-	return fmt.Sprintf("git::%s://github.com/%s/%s-%s-%s?ref=v%s", gh.Config.Protocol, namespace, gh.Config.Prefix, provider, name, version)
+	path := gh.Path(provider, name)
+
+	return fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Config.Protocol, namespace, path, version)
 }
 
 // Validate GitHub client
