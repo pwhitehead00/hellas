@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -41,44 +40,54 @@ func newGitHubConfig(file []byte) (*gitHubConfig, error) {
 	return &config, nil
 }
 
+// Bulid an unauthenticated GitHub client
+func unauthenticatedGitHubClient(tr *http.Transport) *github.Client {
+	client := &http.Client{Transport: tr}
+	gitHubClient := github.NewClient(client)
+
+	return gitHubClient
+}
+
+// Bulid an authenticated GitHub client
+func authenticatedGitHubClient(token string, tr *http.Transport) *github.Client {
+	client := &http.Client{Transport: tr}
+	ctx := context.TODO()
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	gitHubClient := github.NewClient(tc)
+	return gitHubClient
+}
+
 // New GitHub module registry
-func NewGitHubRegistry(config *gitHubConfig) (Registry, error) {
+func NewGitHubRegistry(config *gitHubConfig) Registry {
 
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
 	}
 
-	sslcli := &http.Client{Transport: tr}
-	ctx := context.TODO()
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
-
 	token, ok := os.LookupEnv("TOKEN")
-	if !ok {
-		log.Println("No token provided, using unauthenticated GitHub client")
-		tc := oauth2.NewClient(ctx, nil)
-		client := github.NewClient(tc)
 
+	if ok {
+		client := authenticatedGitHubClient(token, tr)
 		return &GitHubRegistry{
 			Client: client,
 			Config: config,
-		}, nil
+		}
 	}
 
-	log.Println("Token found, using authenticated GitHub client")
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: string(token)},
-	)
-
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-
+	client := unauthenticatedGitHubClient(tr)
 	return &GitHubRegistry{
 		Client: client,
 		Config: config,
-	}, nil
+	}
 }
 
-// Helper function
+// Helper function to build the GitHub repo path
 func (gh *GitHubRegistry) Path(provider, name string) string {
 	if gh.Config.RepoPrefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)

@@ -23,10 +23,7 @@ func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 			return nil, err
 		}
 
-		r, err = NewGitHubRegistry(c)
-		if err != nil {
-			return nil, err
-		}
+		r = NewGitHubRegistry(c)
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}

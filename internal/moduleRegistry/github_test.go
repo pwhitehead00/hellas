@@ -1,6 +1,7 @@
 package moduleregistry
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"net/http"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/google/go-github/v44/github"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 )
 
 func TestGitHubDownload(t *testing.T) {
@@ -17,7 +19,7 @@ func TestGitHubDownload(t *testing.T) {
 			RepoPrefix: "prefix",
 		}
 
-		r, _ := NewGitHubRegistry(c)
+		r := NewGitHubRegistry(c)
 		actual := r.Download("my-namespace", "module", "happycloud", "3.11.0")
 
 		expected := "git::https://github.com/my-namespace/prefix-happycloud-module?ref=v3.11.0"
@@ -46,7 +48,7 @@ func TestGitHubClient(t *testing.T) {
 			RepoPrefix:         "repoPrefix",
 		}
 
-		actual, _ := NewGitHubRegistry(c)
+		actual := NewGitHubRegistry(c)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 
@@ -70,7 +72,27 @@ func TestGitHubClient(t *testing.T) {
 			RepoPrefix:         "repoPrefix",
 		}
 
-		actual, _ := NewGitHubRegistry(c)
+		actual := NewGitHubRegistry(c)
+		assert.Equal(t, expected, actual, "Github clients should be equal")
+	})
+}
+
+func TestAuthenticatedGitHubClient(t *testing.T) {
+	t.Run("Authenticated Github Client Secure TLS", func(t *testing.T) {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+		}
+		actual := authenticatedGitHubClient("token", tr)
+
+		ts := oauth2.StaticTokenSource(
+			&oauth2.Token{AccessToken: "token"},
+		)
+
+		client := &http.Client{Transport: tr}
+		ctx := context.TODO()
+		ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+		tc := oauth2.NewClient(ctx, ts)
+		expected := github.NewClient(tc)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
 	})
 }
@@ -81,7 +103,7 @@ func TestGitHubValidation(t *testing.T) {
 			Protocol: "foo",
 		}
 
-		mr, _ := NewGitHubRegistry(c)
+		mr := NewGitHubRegistry(c)
 		err := mr.validate()
 
 		assert.Equal(t, errors.New("Invalid protocol: foo"), err)
@@ -94,7 +116,7 @@ func TestGitHubPath(t *testing.T) {
 			RepoPrefix: "prefix",
 		}
 
-		mr, _ := NewGitHubRegistry(c)
+		mr := NewGitHubRegistry(c)
 		actual := mr.Path("happycloud", "module")
 
 		assert.Equal(t, "prefix-happycloud-module", actual)
@@ -103,7 +125,7 @@ func TestGitHubPath(t *testing.T) {
 	t.Run("Path: Without Repo Prefix", func(t *testing.T) {
 		c := &gitHubConfig{}
 
-		mr, _ := NewGitHubRegistry(c)
+		mr := NewGitHubRegistry(c)
 		actual := mr.Path("happycloud", "module")
 
 		assert.Equal(t, "happycloud-module", actual)

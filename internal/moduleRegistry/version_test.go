@@ -29,7 +29,7 @@ func TestVersions(t *testing.T) {
 			RepoPrefix: "prefix",
 		}
 
-		mr, _ := NewGitHubRegistry(c)
+		mr := NewGitHubRegistry(c)
 		repo := mr.Path("happycloud", "module")
 		actual := Versions("my-namespace", "module", "happycloud", repo, []string{"1.0.0", "1.0.1"})
 		assert.Equal(t, expected, actual, "Versions should be the same")

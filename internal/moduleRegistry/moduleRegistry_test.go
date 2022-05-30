@@ -20,7 +20,7 @@ func TestModuleRegistry(t *testing.T) {
 			RepoPrefix:         "prefix",
 			Protocol:           "https",
 		}
-		expected, _ := NewGitHubRegistry(c)
+		expected := NewGitHubRegistry(c)
 		assert.Equal(t, expected, actual)
 	})
 
