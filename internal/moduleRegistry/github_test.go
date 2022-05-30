@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/go-github/v44/github"
-	"github.com/ironhalo/hellas/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,34 +84,6 @@ func TestGitHubClient(t *testing.T) {
 
 		actual, _ := NewGitHubRegistry(c)
 		assert.Equal(t, expected, actual, "Github clients should be equal")
-	})
-}
-
-func TestGitHubVersions(t *testing.T) {
-	t.Run("Github Versions", func(t *testing.T) {
-		expected := models.ModuleVersions{
-			Modules: []*models.ModuleProviderVersions{
-				{
-					Source: "my-namespace/prefix-provider-name",
-					Versions: []*models.ModuleVersion{
-						{
-							Version: "1.0.0",
-						},
-						{
-							Version: "1.0.1",
-						},
-					},
-				},
-			},
-		}
-
-		c := &gitHubConfig{
-			Prefix: "prefix",
-		}
-
-		mr, _ := NewGitHubRegistry(c)
-		actual := mr.Versions("my-namespace", "name", "provider", []string{"1.0.0", "1.0.1"})
-		assert.Equal(t, expected, actual, "GitHub Versions should be the same")
 	})
 }
 

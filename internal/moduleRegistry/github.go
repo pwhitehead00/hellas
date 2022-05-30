@@ -11,7 +11,6 @@ import (
 	"os"
 
 	"github.com/google/go-github/v44/github"
-	"github.com/ironhalo/hellas/internal/models"
 	"golang.org/x/oauth2"
 )
 
@@ -108,31 +107,6 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 		versions = append(versions, *v.Name)
 	}
 	return versions, nil
-}
-
-// TODO: Nothing here is specific to github, move elsewhere for reuse and remove from the registry interface
-// TODO: Rename for better clarity
-func (gh *GitHubRegistry) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
-	var m models.ModuleVersions
-	var mv []*models.ModuleVersion
-
-	repo := gh.Repo(provider, name)
-
-	for _, t := range version {
-		o := models.ModuleVersion{
-			Version: t,
-		}
-		mv = append(mv, &o)
-	}
-
-	mpv := models.ModuleProviderVersions{
-		Source:   fmt.Sprintf("%s/%s", namespace, repo),
-		Versions: mv,
-	}
-
-	m.Modules = append(m.Modules, &mpv)
-
-	return m
 }
 
 func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {

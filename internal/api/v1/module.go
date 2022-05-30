@@ -31,14 +31,15 @@ func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 		provider := c.Param("provider")
 		name := c.Param("name")
 
-		v, err := mr.ListVersions(namespace, name, provider)
+		versions, err := mr.ListVersions(namespace, name, provider)
 		if err != nil {
 			c.Error(err)
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest, "message": err.Error()})
-		} else {
-			o := mr.Versions(namespace, name, provider, v)
-			c.JSON(http.StatusOK, o)
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": err.Error()})
 		}
+
+		repo := mr.Repo(provider, name)
+		o := moduleRegistry.Versions(namespace, name, provider, repo, versions)
+		c.JSON(http.StatusOK, o)
 	})
 }
 
