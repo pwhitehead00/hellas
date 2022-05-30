@@ -31,7 +31,7 @@ func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 		provider := c.Param("provider")
 		name := c.Param("name")
 
-		v, err := mr.GetVersions(namespace, name, provider)
+		v, err := mr.ListVersions(namespace, name, provider)
 		if err != nil {
 			c.Error(err)
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"status": http.StatusBadRequest, "message": err.Error()})

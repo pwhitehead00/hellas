@@ -8,7 +8,7 @@ import (
 )
 
 type Registry interface {
-	GetVersions(namespace, name, provider string) ([]string, error)
+	ListVersions(namespace, name, provider string) ([]string, error)
 	Versions(namespace, name, provider string, versions []string) models.ModuleVersions
 	Download(namespace, name, provider, version string) string
 	Repo(provider, name string) string

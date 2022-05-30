@@ -81,8 +81,7 @@ func (gh *GitHubRegistry) Repo(provider, name string) string {
 	return fmt.Sprintf("%s-%s-%s", gh.Config.Prefix, provider, name)
 }
 
-// TODO: Rename for better clarity
-func (gh *GitHubRegistry) GetVersions(namespace, name, provider string) ([]string, error) {
+func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
 
