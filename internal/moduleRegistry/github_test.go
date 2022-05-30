@@ -128,3 +128,25 @@ func TestGitHubValidation(t *testing.T) {
 		assert.Equal(t, errors.New("Invalid protocol: foo"), err)
 	})
 }
+
+func TestGitHubRepo(t *testing.T) {
+	t.Run("Repo: With Prefix", func(t *testing.T) {
+		c := &gitHubConfig{
+			Prefix: "prefix",
+		}
+
+		mr, _ := NewGitHubRegistry(c)
+		actual := mr.Repo("happycloud", "module")
+
+		assert.Equal(t, "prefix-happycloud-module", actual)
+	})
+
+	t.Run("Repo: Without Prefix", func(t *testing.T) {
+		c := &gitHubConfig{}
+
+		mr, _ := NewGitHubRegistry(c)
+		actual := mr.Repo("happycloud", "module")
+
+		assert.Equal(t, "happycloud-module", actual)
+	})
+}

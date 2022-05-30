@@ -73,13 +73,12 @@ func NewGitHubRegistry(config *gitHubConfig) (Registry, error) {
 	}, nil
 }
 
-// TODO: Should be a method on the gitHubConfig
-func repo(prefix, provider, name string) string {
-	if prefix == "" {
+func (gh *GitHubRegistry) Repo(provider, name string) string {
+	if gh.Config.Prefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)
 	}
 
-	return fmt.Sprintf("%s-%s-%s", prefix, provider, name)
+	return fmt.Sprintf("%s-%s-%s", gh.Config.Prefix, provider, name)
 }
 
 // TODO: Rename for better clarity
@@ -91,7 +90,7 @@ func (gh *GitHubRegistry) GetVersions(namespace, name, provider string) ([]strin
 		PerPage: 100,
 	}
 
-	repo := repo(gh.Config.Prefix, provider, name)
+	repo := gh.Repo(provider, name)
 
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
@@ -118,7 +117,7 @@ func (gh *GitHubRegistry) Versions(namespace, name, provider string, version []s
 	var m models.ModuleVersions
 	var mv []*models.ModuleVersion
 
-	repo := repo(gh.Config.Prefix, provider, name)
+	repo := gh.Repo(provider, name)
 
 	for _, t := range version {
 		o := models.ModuleVersion{
