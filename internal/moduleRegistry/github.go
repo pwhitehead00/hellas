@@ -3,66 +3,101 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
 	"github.com/google/go-github/v44/github"
-	"github.com/ironhalo/hellas/internal/models"
 	"golang.org/x/oauth2"
 )
 
-type GitHubClient struct {
+type GitHubRegistry struct {
 	Client *github.Client
-	Config *models.ModuleRegistry
+	Config *gitHubConfig
 }
 
-func NewGitHubClient(mr models.ModuleRegistry) Registry {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: mr.InsecureSkipVerify},
+type gitHubConfig struct {
+	// Accept self signed certs
+	InsecureSkipVerify bool `json:"insecureSkipVerify"`
+
+	// The protocol used when checking out terraform modules.  Can be either
+	// https or ssh
+	Protocol string `json:"protocol"`
+
+	// A string prefix
+	RepoPrefix string `json:"repoPrefix"`
+}
+
+func newGitHubConfig(file []byte) (*gitHubConfig, error) {
+	var config gitHubConfig
+
+	if err := json.Unmarshal(file, &config); err != nil {
+		return nil, err
 	}
 
-	sslcli := &http.Client{Transport: tr}
+	return &config, nil
+}
+
+// Bulid an unauthenticated GitHub client
+func unauthenticatedGitHubClient(tr *http.Transport) *github.Client {
+	client := &http.Client{Transport: tr}
+	gitHubClient := github.NewClient(client)
+
+	return gitHubClient
+}
+
+// Bulid an authenticated GitHub client
+func authenticatedGitHubClient(token string, tr *http.Transport) *github.Client {
+	client := &http.Client{Transport: tr}
 	ctx := context.TODO()
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, sslcli)
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: token},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	gitHubClient := github.NewClient(tc)
+	return gitHubClient
+}
+
+// New GitHub module registry
+func NewGitHubRegistry(config *gitHubConfig) Registry {
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
+	}
 
 	token, ok := os.LookupEnv("TOKEN")
-	if !ok {
-		log.Println("No token provided, using unauthenticated GitHub client")
-		tc := oauth2.NewClient(ctx, nil)
-		client := github.NewClient(tc)
 
-		return &GitHubClient{
+	if ok {
+		client := authenticatedGitHubClient(token, tr)
+		return &GitHubRegistry{
 			Client: client,
-			Config: &mr,
+			Config: config,
 		}
 	}
 
-	log.Println("Token found, using authenticated GitHub client")
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: string(token)},
-	)
-
-	tc := oauth2.NewClient(ctx, ts)
-	client := github.NewClient(tc)
-
-	return &GitHubClient{
+	client := unauthenticatedGitHubClient(tr)
+	return &GitHubRegistry{
 		Client: client,
-		Config: &mr,
+		Config: config,
 	}
 }
 
-func repo(prefix, provider, name string) string {
-	if prefix == "" {
+// Helper function to build the GitHub repo path
+func (gh *GitHubRegistry) Path(provider, name string) string {
+	if gh.Config.RepoPrefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)
 	}
 
-	return fmt.Sprintf("%s-%s-%s", prefix, provider, name)
+	return fmt.Sprintf("%s-%s-%s", gh.Config.RepoPrefix, provider, name)
 }
 
-func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string, error) {
+// List all tags for a GitHub registry
+func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*github.RepositoryTag
 	var versions []string
 
@@ -70,7 +105,7 @@ func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string,
 		PerPage: 100,
 	}
 
-	repo := repo(gh.Config.Prefix, provider, name)
+	repo := gh.Path(provider, name)
 
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
@@ -91,39 +126,16 @@ func (gh *GitHubClient) GetVersions(namespace, name, provider string) ([]string,
 	return versions, nil
 }
 
-func (gh *GitHubClient) Versions(namespace, name, provider string, version []string) models.ModuleVersions {
-	var m models.ModuleVersions
-	var mv []*models.ModuleVersion
+// Download source code for a specific module version
+// See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
+func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {
+	path := gh.Path(provider, name)
 
-	repo := repo(gh.Config.Prefix, provider, name)
-
-	for _, t := range version {
-		o := models.ModuleVersion{
-			Version: t,
-		}
-		mv = append(mv, &o)
-	}
-
-	mpv := models.ModuleProviderVersions{
-		Source:   fmt.Sprintf("%s/%s", namespace, repo),
-		Versions: mv,
-	}
-
-	m.Modules = append(m.Modules, &mpv)
-
-	return m
-}
-
-func (gh *GitHubClient) Download(namespace, name, provider, version string) string {
-	if gh.Config.Prefix == "" {
-		return fmt.Sprintf("git::%s://github.com/%s/%s-%s?ref=v%s", gh.Config.Protocol, namespace, provider, name, version)
-	}
-	return fmt.Sprintf("git::%s://github.com/%s/%s-%s-%s?ref=v%s", gh.Config.Protocol, namespace, gh.Config.Prefix, provider, name, version)
-
+	return fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Config.Protocol, namespace, path, version)
 }
 
 // Validate GitHub client
-func (gh *GitHubClient) validate() error {
+func (gh *GitHubRegistry) validate() error {
 	if gh.Config.Protocol != "https" && gh.Config.Protocol != "ssh" {
 		return errors.New(fmt.Sprintf("Invalid protocol: %s", gh.Config.Protocol))
 	}

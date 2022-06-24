@@ -6,9 +6,6 @@ metadata:
   {{- include "hellas.labels" . | nindent 4 }}
 data:
   config.json: |-
-    {
     {{- if .Values.moduleRegistryType }}
-      "moduleBackend": {{ .Values.moduleRegistryType | quote }},
-      "moduleRegistry": {{ toJson .Values.moduleRegistry }}
+      {{ toJson .Values.moduleRegistry }}
     {{- end}}
-    }

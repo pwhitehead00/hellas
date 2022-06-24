@@ -3,25 +3,29 @@ package moduleregistry
 import (
 	"errors"
 	"fmt"
-
-	"github.com/ironhalo/hellas/internal/models"
 )
 
 type Registry interface {
-	GetVersions(namespace, name, provider string) ([]string, error)
-	Versions(namespace, name, provider string, versions []string) models.ModuleVersions
+	ListVersions(namespace, name, provider string) ([]string, error)
 	Download(namespace, name, provider, version string) string
+	Path(provider, name string) string
 	validate() error
 }
 
-func NewModuleRegistry(registryType string, mr models.ModuleRegistry) (Registry, error) {
+// Build a new Registry interface
+func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 	var r Registry
 
-	switch registryType {
+	switch *registryType {
 	case "github":
-		r = NewGitHubClient(mr)
+		c, err := newGitHubConfig(config)
+		if err != nil {
+			return nil, err
+		}
+
+		r = NewGitHubRegistry(c)
 	default:
-		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", registryType))
+		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}
 
 	if err := r.validate(); err != nil {

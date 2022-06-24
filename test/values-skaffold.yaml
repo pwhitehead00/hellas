@@ -5,5 +5,5 @@ moduleRegistryType: github
 
 moduleRegistry:
   insecureSkipVerify: true
-  prefix: terraform
+  repoPrefix: terraform
   protocol: https
