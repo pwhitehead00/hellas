@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/google/go-github/v44/github"
@@ -27,53 +28,21 @@ func TestGitHubDownload(t *testing.T) {
 	})
 }
 
-func TestGitHubClient(t *testing.T) {
-	t.Run("Github Client Insecure TLS", func(t *testing.T) {
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
-		client := &http.Client{Transport: tr}
-		expected := &GitHubRegistry{
-			Client: github.NewClient(client),
-			Config: &gitHubConfig{
-				InsecureSkipVerify: true,
-				Protocol:           "https",
-				RepoPrefix:         "repoPrefix",
-			},
-		}
+func TestGitHubRegistry(t *testing.T) {
+	t.Run("Authenticated GitHub Repository", func(t *testing.T) {
+		os.Setenv("TOKEN", "mytoken")
 
-		c := &gitHubConfig{
-			InsecureSkipVerify: true,
-			Protocol:           "https",
-			RepoPrefix:         "repoPrefix",
-		}
-
-		actual := NewGitHubRegistry(c)
-		assert.Equal(t, expected, actual, "Github clients should be equal")
-	})
-
-	t.Run("Github Client Secure TLS", func(t *testing.T) {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 		}
-		client := &http.Client{Transport: tr}
+
 		expected := &GitHubRegistry{
-			Client: github.NewClient(client),
-			Config: &gitHubConfig{
-				InsecureSkipVerify: false,
-				Protocol:           "https",
-				RepoPrefix:         "repoPrefix",
-			},
+			Client: authenticatedGitHubClient("mytoken", tr),
+			Config: &gitHubConfig{},
 		}
 
-		c := &gitHubConfig{
-			InsecureSkipVerify: false,
-			Protocol:           "https",
-			RepoPrefix:         "repoPrefix",
-		}
-
-		actual := NewGitHubRegistry(c)
-		assert.Equal(t, expected, actual, "Github clients should be equal")
+		actual := NewGitHubRegistry(&gitHubConfig{})
+		assert.Equal(t, expected, actual)
 	})
 }
 
