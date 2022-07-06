@@ -61,14 +61,12 @@ func NewGitLabRegistry(config *gitLabConfig) Registry {
 }
 
 // Helper function to build the GitLab repo path
-func (gh *GitLabRegistry) Path(provider, name string) string {
-	// if gh.Config.RepoPrefix == "" {
-	// 	return fmt.Sprintf("%s-%s", provider, name)
-	// }
+func (gl *GitLabRegistry) Path(namespace, provider, name string) string {
+	if gl.Config.Groups == "" {
+		return fmt.Sprintf("%s/%s/%s", namespace, provider, name)
+	}
 
-	// return fmt.Sprintf("%s-%s-%s", gh.Config.RepoPrefix, provider, name)
-
-	return ""
+	return fmt.Sprintf("%s/%s/%s/%s", gl.Config.Groups, namespace, provider, name)
 }
 
 // List all tags for a GitLab project
@@ -82,8 +80,8 @@ func (gl *GitLabRegistry) ListVersions(namespace, name, provider string) ([]stri
 		},
 	}
 
-	// repo := gl.Path("foo", "bar")
-	repo := fmt.Sprintf("%s/%s/%s/%s", gl.Config.Groups, namespace, provider, name)
+	repo := gl.Path(namespace, provider, name)
+	// repo := fmt.Sprintf("%s/%s/%s/%s", gl.Config.Groups, namespace, provider, name)
 
 	for {
 		tags, resp, err := gl.Client.Tags.ListTags(repo, opt)

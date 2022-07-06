@@ -8,7 +8,7 @@ import (
 type Registry interface {
 	ListVersions(namespace, name, provider string) ([]string, error)
 	Download(namespace, name, provider, version string) string
-	Path(provider, name string) string
+	Path(namespace, provider, name string) string
 	validate() error
 }
 

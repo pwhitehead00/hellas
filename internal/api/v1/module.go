@@ -41,7 +41,7 @@ func version(rg *gin.RouterGroup, mr moduleRegistry.Registry) {
 			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"status": http.StatusNotFound, "message": err.Error()})
 		}
 
-		repo := mr.Path(provider, name)
+		repo := mr.Path(namespace, provider, name)
 		o := moduleRegistry.Versions(namespace, name, provider, repo, versions)
 		c.JSON(http.StatusOK, o)
 	})
