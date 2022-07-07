@@ -108,10 +108,8 @@ func (gl *gitLabRegistry) ListVersions(namespace, name, provider string) ([]stri
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
 func (gl *gitLabRegistry) Download(namespace string, name string, provider string, version string) string {
-	if gl.Config.Groups == "" {
-		return fmt.Sprintf("git::%s://gitlab.com/%s/%s/%s?ref=v%s", gl.Config.Protocol, namespace, provider, name, version)
-	}
-	return fmt.Sprintf("git::%s://gitlab.com/%s/%s/%s/%s?ref=v%s", gl.Config.Protocol, gl.Config.Groups, namespace, provider, name, version)
+	repo := gl.Path(namespace, provider, name)
+	return fmt.Sprintf("git::%s://%s/%s?ref=v%s", gl.Config.Protocol, gl.Config.HostName, repo, version)
 }
 
 // Validate GitLab config
