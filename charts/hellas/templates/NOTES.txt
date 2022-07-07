@@ -1,3 +1,6 @@
 Successfully deployed Hellas!
 Autscaling: {{ .Values.autoscaling.enabled }}
 PDB: {{ .Values.podDisruptionBudget.enabled }}
+{{- if .Values.test.enabled }}
+Testing is enabled for {{ .Values.test.source}} {{ .Values.test.version }}
+{{- end }}

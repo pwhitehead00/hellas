@@ -17,10 +17,18 @@ test:
 deploy:
   helm:
     releases:
-      - name: hellas
+      - name: hellas-gitlab
         chartPath: charts/hellas
         valuesFiles:
           - ./test/values-gitlab.yaml
+        artifactOverrides:
+          imageKey: ironhalo/hellas
+        imageStrategy:
+          helm: {}
+      - name: hellas-github
+        chartPath: charts/hellas
+        valuesFiles:
+          - ./test/values-github.yaml
         artifactOverrides:
           imageKey: ironhalo/hellas
         imageStrategy:

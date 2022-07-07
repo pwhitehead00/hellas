@@ -13,3 +13,14 @@ clean:
 .PHONY: build
 build:
 	CGO_ENABLED=0 go build ${LDFLAGS} -a -o server $(MODULE)/cmd/server
+
+.PHONY: test-gitlab
+test-gitlab:
+	helm test hellas-gitlab
+
+.PHONY: test-github
+test-github:
+	helm test hellas-github
+
+.PHONY: test
+test: test-github test-gitlab
