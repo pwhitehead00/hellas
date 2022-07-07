@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/xanzy/go-gitlab"
@@ -114,5 +115,20 @@ func (gl *GitLabRegistry) Download(namespace string, name string, provider strin
 
 // Validate GitLab config
 func (gl *GitLabRegistry) validate() error {
+	if gl.Config.Protocol != "https" && gl.Config.Protocol != "ssh" {
+		return fmt.Errorf("Invalid protocol: %s", gl.Config.Protocol)
+	}
+
+	if gl.Config.BaseURL != "" {
+		u, err := url.Parse(gl.Config.BaseURL)
+		if err != nil {
+			return err
+		}
+
+		if u.Scheme != "https" && u.Scheme != "http" {
+			return fmt.Errorf("Invalid scheme, only http(s) is supported, got %s", u.Scheme)
+		}
+	}
+
 	return nil
 }
