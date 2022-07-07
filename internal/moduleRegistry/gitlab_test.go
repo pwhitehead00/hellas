@@ -13,7 +13,7 @@ func TestGitLabValidation(t *testing.T) {
 			Protocol: "foo",
 		}
 
-		mr := NewGitLabRegistry(c)
+		mr := newGitLabRegistry(c)
 		err := mr.validate()
 
 		assert.Equal(t, errors.New("Invalid protocol: foo"), err)
@@ -25,7 +25,7 @@ func TestGitLabValidation(t *testing.T) {
 			BaseURL:  "foo://gitlab.com",
 		}
 
-		mr := NewGitLabRegistry(c)
+		mr := newGitLabRegistry(c)
 		actual := mr.validate()
 
 		assert.Equal(t, errors.New("Invalid scheme, only http(s) is supported, got foo"), actual)

@@ -12,7 +12,7 @@ import (
 	"github.com/xanzy/go-gitlab"
 )
 
-type GitLabRegistry struct {
+type gitLabRegistry struct {
 	Client *gitlab.Client
 	Config *gitLabConfig
 }
@@ -27,6 +27,8 @@ type gitLabConfig struct {
 	BaseURL string `json:"baseURL"`
 	// Set the parent groups for the Terraform module
 	Groups string `json:"groups"`
+	// Derive hostname from BaseURL
+	HostName string
 }
 
 func newGitLabConfig(file []byte) (*gitLabConfig, error) {
@@ -39,7 +41,7 @@ func newGitLabConfig(file []byte) (*gitLabConfig, error) {
 	return &config, nil
 }
 
-func NewGitLabRegistry(config *gitLabConfig) Registry {
+func newGitLabRegistry(config *gitLabConfig) Registry {
 	token, ok := os.LookupEnv("TOKEN")
 	if !ok {
 		log.Println("No token provided, using unauthenticated GitLab client")
@@ -55,14 +57,14 @@ func NewGitLabRegistry(config *gitLabConfig) Registry {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	return &GitLabRegistry{
+	return &gitLabRegistry{
 		Client: client,
 		Config: config,
 	}
 }
 
 // Helper function to build the GitLab repo path
-func (gl *GitLabRegistry) Path(namespace, provider, name string) string {
+func (gl *gitLabRegistry) Path(namespace, provider, name string) string {
 	if gl.Config.Groups == "" {
 		return fmt.Sprintf("%s/%s/%s", namespace, provider, name)
 	}
@@ -71,7 +73,7 @@ func (gl *GitLabRegistry) Path(namespace, provider, name string) string {
 }
 
 // List all tags for a GitLab project
-func (gl *GitLabRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
+func (gl *gitLabRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
 	var allTags []*gitlab.Tag
 	var versions []string
 
@@ -82,7 +84,6 @@ func (gl *GitLabRegistry) ListVersions(namespace, name, provider string) ([]stri
 	}
 
 	repo := gl.Path(namespace, provider, name)
-	// repo := fmt.Sprintf("%s/%s/%s/%s", gl.Config.Groups, namespace, provider, name)
 
 	for {
 		tags, resp, err := gl.Client.Tags.ListTags(repo, opt)
@@ -106,7 +107,7 @@ func (gl *GitLabRegistry) ListVersions(namespace, name, provider string) ([]stri
 
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
-func (gl *GitLabRegistry) Download(namespace string, name string, provider string, version string) string {
+func (gl *gitLabRegistry) Download(namespace string, name string, provider string, version string) string {
 	if gl.Config.Groups == "" {
 		return fmt.Sprintf("git::%s://gitlab.com/%s/%s/%s?ref=v%s", gl.Config.Protocol, namespace, provider, name, version)
 	}
@@ -114,7 +115,7 @@ func (gl *GitLabRegistry) Download(namespace string, name string, provider strin
 }
 
 // Validate GitLab config
-func (gl *GitLabRegistry) validate() error {
+func (gl *gitLabRegistry) validate() error {
 	if gl.Config.Protocol != "https" && gl.Config.Protocol != "ssh" {
 		return fmt.Errorf("Invalid protocol: %s", gl.Config.Protocol)
 	}
@@ -128,6 +129,13 @@ func (gl *GitLabRegistry) validate() error {
 		if u.Scheme != "https" && u.Scheme != "http" {
 			return fmt.Errorf("Invalid scheme, only http(s) is supported, got %s", u.Scheme)
 		}
+
+		gl.Config.HostName = u.Host
+	}
+
+	if gl.Config.BaseURL == "" {
+		gl.Config.BaseURL = "https://gitlab.com"
+		gl.Config.HostName = "gitlab.com"
 	}
 
 	return nil

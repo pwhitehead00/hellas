@@ -30,7 +30,7 @@ func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 			return nil, err
 		}
 
-		r = NewGitLabRegistry(c)
+		r = newGitLabRegistry(c)
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}
