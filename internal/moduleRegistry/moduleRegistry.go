@@ -8,7 +8,7 @@ import (
 type Registry interface {
 	ListVersions(namespace, name, provider string) ([]string, error)
 	Download(namespace, name, provider, version string) string
-	Path(provider, name string) string
+	Path(namespace, provider, name string) string
 	validate() error
 }
 
@@ -24,6 +24,13 @@ func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
 		}
 
 		r = NewGitHubRegistry(c)
+	case "gitlab":
+		c, err := newGitLabConfig(config)
+		if err != nil {
+			return nil, err
+		}
+
+		r = newGitLabRegistry(c)
 	default:
 		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}

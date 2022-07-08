@@ -1,3 +1,4 @@
+{{- if .Values.test.enabled }}
 ---
 apiVersion: v1
 kind: Pod
@@ -57,8 +58,8 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 data:
   main.tf: |
-    module "hellas_vpc" {
-      source  = "hellas.default/terraform-aws-modules/vpc/aws"
-      version = "3.11.0"
-      # insert the 21 required variables here
+    module "hellas_test" {
+      source = {{ .Values.test.source | quote }}
+      version = {{ .Values.test.version | quote }}
     }
+{{- end }}

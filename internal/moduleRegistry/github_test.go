@@ -86,7 +86,7 @@ func TestGitHubPath(t *testing.T) {
 		}
 
 		mr := NewGitHubRegistry(c)
-		actual := mr.Path("happycloud", "module")
+		actual := mr.Path("namespace", "happycloud", "module")
 
 		assert.Equal(t, "prefix-happycloud-module", actual)
 	})
@@ -95,7 +95,7 @@ func TestGitHubPath(t *testing.T) {
 		c := &gitHubConfig{}
 
 		mr := NewGitHubRegistry(c)
-		actual := mr.Path("happycloud", "module")
+		actual := mr.Path("namespace", "happycloud", "module")
 
 		assert.Equal(t, "happycloud-module", actual)
 	})

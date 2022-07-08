@@ -127,3 +127,8 @@ affinity:
 #         values:
 #         - hellas
 #     topologyKey: "kubernetes.io/hostname"
+
+tests:
+  enabled: false
+  source: ""
+  version: ""

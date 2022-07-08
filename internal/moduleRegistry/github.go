@@ -88,7 +88,7 @@ func NewGitHubRegistry(config *gitHubConfig) Registry {
 }
 
 // Helper function to build the GitHub repo path
-func (gh *GitHubRegistry) Path(provider, name string) string {
+func (gh *GitHubRegistry) Path(namespace, provider, name string) string {
 	if gh.Config.RepoPrefix == "" {
 		return fmt.Sprintf("%s-%s", provider, name)
 	}
@@ -105,7 +105,7 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 		PerPage: 100,
 	}
 
-	repo := gh.Path(provider, name)
+	repo := gh.Path(namespace, provider, name)
 
 	for {
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
@@ -129,7 +129,7 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
 func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {
-	path := gh.Path(provider, name)
+	path := gh.Path(namespace, provider, name)
 
 	return fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Config.Protocol, namespace, path, version)
 }
