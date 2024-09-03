@@ -14,3 +14,11 @@ Run `make up` to stand up a minikube cluster and start Skaffold
 ### Cleanup
 
 Run `make clean` to tear down and clean up minikube and stop Skaffold
+
+```yaml
+server:
+  certSecretName: my-cert
+registries:
+  github:
+    tokenSecretName: my-token
+```

@@ -1,10 +1,12 @@
-module github.com/ironhalo/hellas
+module github.com/pwhitehead00/hellas
 
-go 1.17
+go 1.22.6
 
 require (
 	github.com/gin-gonic/gin v1.7.7
 	github.com/google/go-github/v44 v44.1.0
+	github.com/google/go-github/v64 v64.0.0
+	github.com/ironhalo/hellas v0.0.0-20220624053352-766459f02994
 	github.com/stretchr/testify v1.7.1
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5
 )

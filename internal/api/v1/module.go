@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	moduleRegistry "github.com/ironhalo/hellas/internal/moduleRegistry"
+	moduleRegistry "github.com/pwhitehead00/hellas/internal/moduleRegistry"
 )
 
 // This endpoint downloads the specified version of a module for a single provider
