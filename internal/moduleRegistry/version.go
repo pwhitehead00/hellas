@@ -3,7 +3,7 @@ package moduleregistry
 import (
 	"fmt"
 
-	"github.com/ironhalo/hellas/internal/models"
+	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 // List available versions for a specific module

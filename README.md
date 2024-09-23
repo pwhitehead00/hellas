@@ -18,7 +18,14 @@ Run `make clean` to tear down and clean up minikube and stop Skaffold
 ```yaml
 server:
   certSecretName: my-cert
-registries:
+
+registry:
   github:
     tokenSecretName: my-token
+    insecureSkipVerify: false
+    protocol: https
+  # s3:
+  #   region: us-east-1
+  #   bucket: foo
+  #   path: bar/bix
 ```

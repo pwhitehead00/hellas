@@ -3,34 +3,30 @@ package moduleregistry
 import (
 	"errors"
 	"fmt"
+	"log"
+
+	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 type Registry interface {
-	ListVersions(namespace, name, provider string) ([]string, error)
-	Download(namespace, name, provider, version string) string
-	Path(provider, name string) string
-	validate() error
+	// ListVersions(namespace, name, provider string) ([]string, error)
+	ListVersions(group, path string) (*models.ModuleVersions, error)
+	// Download(name, provider, version string) string
 }
 
 // Build a new Registry interface
-func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
-	var r Registry
-
-	switch *registryType {
-	case "github":
-		c, err := newGitHubConfig(config)
-		if err != nil {
-			return nil, err
+func NewModuleRegistry(config Config) (Registry, error) {
+	for r, rc := range config.Registry {
+		switch r {
+		case "github":
+			log.Println("running github")
+			c, ok := rc.(GithubConfig)
+			if !ok {
+				return nil, errors.New("invalid github config")
+			}
+			return NewGitHubRegistry(c)
 		}
-
-		r = NewGitHubRegistry(c)
-	default:
-		return nil, errors.New(fmt.Sprintf("Unsupported registry type: %s", *registryType))
 	}
 
-	if err := r.validate(); err != nil {
-		return nil, err
-	}
-
-	return r, nil
+	return nil, errors.New(fmt.Sprint("Unsupported registry type"))
 }

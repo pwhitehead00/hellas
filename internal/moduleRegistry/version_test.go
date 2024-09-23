@@ -3,7 +3,7 @@ package moduleregistry
 import (
 	"testing"
 
-	"github.com/ironhalo/hellas/internal/models"
+	"github.com/pwhitehead00/hellas/internal/models"
 	"github.com/stretchr/testify/assert"
 )
 

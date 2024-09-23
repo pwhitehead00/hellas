@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ironhalo/hellas/internal/models"
+	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 func WellKnown(r *gin.Engine) {

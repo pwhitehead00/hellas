@@ -7,15 +7,13 @@ import (
 	"time"
 
 	"log"
+
+	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 const (
 	discoveryPath string = "GET /.well-known/terraform.json"
 )
-
-type discovery struct {
-	Modules string `json:"modules.v1"`
-}
 
 func NewServer(mux *http.ServeMux, skipTLSVerify bool, cert, key string) (*http.Server, error) {
 	s := &http.Server{
@@ -40,14 +38,13 @@ func NewServer(mux *http.ServeMux, skipTLSVerify bool, cert, key string) (*http.
 }
 
 func WellKnown(w http.ResponseWriter, r *http.Request) {
-	d := discovery{
-		Modules: "/v1/modules/",
+	wk := models.WellKnown{
+		Modules: "/terraform/modules/v1/",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(d); err != nil {
+	if err := json.NewEncoder(w).Encode(wk); err != nil {
 		log.Printf("json encoding failed: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-
 }
