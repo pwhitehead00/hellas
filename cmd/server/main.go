@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -24,7 +23,9 @@ func main() {
 
 	config := mr.Config{
 		Registry: map[string]any{
-			"github": mr.GithubConfig{},
+			"github": mr.GithubConfig{
+				Protocol: "https",
+			},
 		},
 	}
 	// var config mr.Config
@@ -45,20 +46,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	mux.HandleFunc("/github/{group}/{project}", func(w http.ResponseWriter, r *http.Request) {
-		group := r.PathValue("group")
-		project := r.PathValue("project")
-		data, err := registry.ListVersions(group, project)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
 
-		w.Header().Set("Content-Type", "application/json")
-		if err := json.NewEncoder(w).Encode(data); err != nil {
-			log.Printf("json encoding failed: %v", err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	})
+	mux.HandleFunc("GET /github/{group}/{project}/versions", registry.Versions)
+	mux.HandleFunc("GET /github/{group}/{project}/{version}/download", registry.Download)
 
 	srv, err := server.NewServer(mux, false, "", "")
 	if err != nil {

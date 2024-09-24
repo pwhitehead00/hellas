@@ -3,6 +3,7 @@ package moduleregistry
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -47,17 +48,27 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 }
 
 // List all tags for a GitHub registry
-func (gh GitHubRegistry) ListVersions(group, project string) (*models.ModuleVersions, error) {
+func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 	var allTags []*github.RepositoryTag
 	mvs := models.NewModuleVersions()
+	group := r.PathValue("group")
+	project := r.PathValue("project")
+	w.Header().Set("Content-Type", "application/json")
 
 	opt := &github.ListOptions{}
-
 	for {
+		// TODO: properly pass contexts
+		// TODO: add context timeout
 		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), group, project, opt)
+		if resp == nil && err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		defer resp.Body.Close()
-		if err != nil {
-			return nil, err
+
+		if resp.StatusCode == http.StatusNotFound && err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
 		}
 
 		allTags = append(allTags, tags...)
@@ -71,11 +82,22 @@ func (gh GitHubRegistry) ListVersions(group, project string) (*models.ModuleVers
 		mvs.AddVersion(v.Name)
 	}
 
-	return &mvs, nil
+	mvs.SetSource(fmt.Sprintf("github/%s/%s", group, project))
+	if err := json.NewEncoder(w).Encode(mvs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
-func (gh *GitHubRegistry) Download(name, provider, version string) string {
-	return fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, name, provider, version)
+func (gh GitHubRegistry) Download(w http.ResponseWriter, r *http.Request) {
+	group := r.PathValue("group")
+	project := r.PathValue("project")
+	version := r.PathValue("version")
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=%s", gh.Protocol, group, project, version))
+	w.WriteHeader(http.StatusNoContent)
 }
