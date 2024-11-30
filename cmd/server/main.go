@@ -13,10 +13,6 @@ import (
 	"github.com/pwhitehead00/hellas/internal/server"
 )
 
-const (
-	discoveryPath string = "GET /.well-known/terraform.json"
-)
-
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -39,16 +35,10 @@ func main() {
 	// 	log.Fatal(err)
 	// }
 
-	mux := http.NewServeMux()
-	mux.HandleFunc(discoveryPath, server.WellKnown)
-
-	registry, err := mr.NewModuleRegistry(config)
+	mux, err := mr.NewModuleRegistry(config)
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	mux.HandleFunc("GET /github/{group}/{project}/versions", registry.Versions)
-	mux.HandleFunc("GET /github/{group}/{project}/{version}/download", registry.Download)
 
 	srv, err := server.NewServer(mux, false, "", "")
 	if err != nil {
