@@ -34,4 +34,3 @@ TODO:
 
 * set up cert manager integration
 * set up logging
-* add k8s health checks
