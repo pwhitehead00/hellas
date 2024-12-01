@@ -1,8 +1,4 @@
-FROM golang:alpine AS build
-
-RUN apk update && \
-    apk add git make && \
-    rm -rf /var/cache/apk/*
+FROM golang:1.22 AS build
 
 WORKDIR /build
 
@@ -12,7 +8,7 @@ RUN go mod verify
 
 RUN make build
 
-FROM scratch
+FROM gcr.io/distroless/static
 
 COPY --from=build /build/server /usr/local/bin/server
 

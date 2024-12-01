@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/google/go-github/v64/github"
-	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 type GitHubRegistry struct {
@@ -48,9 +47,10 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 }
 
 // List all tags for a GitHub registry
+// See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
 func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 	var allTags []*github.RepositoryTag
-	mvs := models.NewModuleVersions()
+	mvs := newModuleVersions()
 	group := r.PathValue("group")
 	project := r.PathValue("project")
 	w.Header().Set("Content-Type", "application/json")
@@ -79,10 +79,11 @@ func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, v := range allTags {
-		mvs.AddVersion(v.Name)
+		mvs.addVersion(v.Name)
 	}
 
-	mvs.SetSource(fmt.Sprintf("github/%s/%s", group, project))
+	mvs.setSource(fmt.Sprintf("github.com/%s/%s", group, project))
+
 	if err := json.NewEncoder(w).Encode(mvs); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -92,12 +93,15 @@ func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
+//
+// The module protocl doesn't directly pass the version field as a the ref
+// It doesn't want a "v" specified in the HCL but seems to expect tag refs are prefixed with "v"
 func (gh GitHubRegistry) Download(w http.ResponseWriter, r *http.Request) {
 	group := r.PathValue("group")
 	project := r.PathValue("project")
 	version := r.PathValue("version")
 
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=%s", gh.Protocol, group, project, version))
+	w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, group, project, version))
 	w.WriteHeader(http.StatusNoContent)
 }

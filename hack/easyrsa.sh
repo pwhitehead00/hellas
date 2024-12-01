@@ -9,8 +9,8 @@ tar xzf easy-rsa.tar.gz
 pushd easy-rsa-master/easyrsa3
 
 ./easyrsa init-pki
-./easyrsa --batch "--req-cn=hellas.default@$(date +%s)" build-ca nopass
-./easyrsa --subject-alt-name="DNS:hellas.default,DNS:hellas.default.svc" --days=10000 build-server-full server nopass
+./easyrsa --batch "--req-cn=hellas.hellas@$(date +%s)" build-ca nopass
+./easyrsa --subject-alt-name="DNS:hellas.hellas,DNS:hellas.hellas.svc.cluster.local" --days=10000 build-server-full server nopass
 
 popd
 popd

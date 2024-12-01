@@ -17,6 +17,7 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
+	// todo - proper config setup
 	config := mr.Config{
 		Registry: map[string]any{
 			"github": mr.GithubConfig{
@@ -40,14 +41,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	srv, err := server.NewServer(mux, false, "", "")
+	// todo - configure TLS with config
+	srv, err := server.NewServer(mux, true, "/tls/tls.crt", "/tls/tls.key")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	go func() {
-		// if err := srv.ListenAndServeTLS("", ""); err != nil && errors.Is(err, http.ErrServerClosed) {
-		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server startup failed: %s\n", err)
 		}
 	}()

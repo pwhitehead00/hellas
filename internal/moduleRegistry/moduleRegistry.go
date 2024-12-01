@@ -5,8 +5,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-
-	"github.com/pwhitehead00/hellas/internal/models"
 )
 
 const (
@@ -22,7 +20,8 @@ type Registry interface {
 // TODO: support S3
 func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 	mux := http.NewServeMux()
-	mux.HandleFunc(discoveryPath, wellKnown)
+	mux.HandleFunc(discoveryPath, discovery)
+	mux.HandleFunc("/healthcheck", healthCheck)
 
 	for r, rc := range config.Registry {
 		switch r {
@@ -39,8 +38,8 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 				return nil, err
 			}
 
-			mux.HandleFunc("GET /v1/modules/github/{group}/{project}/versions", r.Versions)
-			mux.HandleFunc("GET /v1/modules/github/{group}/{project}/{version}/download", r.Download)
+			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
+			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
 			return mux, nil
 		}
 	}
@@ -48,13 +47,23 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 	return nil, errors.New("Unsupported registry type")
 }
 
-func wellKnown(w http.ResponseWriter, r *http.Request) {
-	wk := models.WellKnown{
-		Modules: "/terraform/modules/v1/",
+// Discovery process
+// See https://developer.hashicorp.com/terraform/internals/remote-service-discovery#discovery-process
+func discovery(w http.ResponseWriter, r *http.Request) {
+	wk := wellKnown{
+		Modules: "/v1/modules/",
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(wk); err != nil {
+		log.Printf("json encoding failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode("ok"); err != nil {
 		log.Printf("json encoding failed: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
