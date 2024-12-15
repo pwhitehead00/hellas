@@ -9,7 +9,7 @@ moduleRegistry:
   protocol: https
 
 imageKey:
-  repository: ironhalo/hellas
+  repository: hellas
   pullPolicy: IfNotPresent
   tag: "latest"
 

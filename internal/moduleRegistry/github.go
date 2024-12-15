@@ -8,109 +8,67 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/google/go-github/v44/github"
-	"golang.org/x/oauth2"
+	"github.com/google/go-github/v64/github"
 )
 
 type GitHubRegistry struct {
-	Client *github.Client
-	Config *gitHubConfig
-}
-
-type gitHubConfig struct {
-	// Accept self signed certs
-	InsecureSkipVerify bool `json:"insecureSkipVerify"`
-
-	// The protocol used when checking out terraform modules.  Can be either
-	// https or ssh
-	Protocol string `json:"protocol"`
-
-	// A string prefix
-	RepoPrefix string `json:"repoPrefix"`
-}
-
-func newGitHubConfig(file []byte) (*gitHubConfig, error) {
-	var config gitHubConfig
-
-	if err := json.Unmarshal(file, &config); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-// Bulid an unauthenticated GitHub client
-func unauthenticatedGitHubClient(tr *http.Transport) *github.Client {
-	client := &http.Client{Transport: tr}
-	gitHubClient := github.NewClient(client)
-
-	return gitHubClient
-}
-
-// Bulid an authenticated GitHub client
-func authenticatedGitHubClient(token string, tr *http.Transport) *github.Client {
-	client := &http.Client{Transport: tr}
-	ctx := context.TODO()
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, client)
-
-	ts := oauth2.StaticTokenSource(
-		&oauth2.Token{AccessToken: token},
-	)
-	tc := oauth2.NewClient(ctx, ts)
-
-	gitHubClient := github.NewClient(tc)
-	return gitHubClient
+	Client   *github.Client
+	Protocol string
 }
 
 // New GitHub module registry
-func NewGitHubRegistry(config *gitHubConfig) Registry {
+func NewGitHubRegistry(config GithubConfig) (Registry, error) {
+	var r GitHubRegistry
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: config.InsecureSkipVerify},
+	httpClient := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: config.InsecureSkipVerify,
+			},
+		},
 	}
 
-	token, ok := os.LookupEnv("TOKEN")
+	r.Client = github.NewClient(httpClient)
+	r.Protocol = config.Protocol
 
-	if ok {
-		client := authenticatedGitHubClient(token, tr)
-		return &GitHubRegistry{
-			Client: client,
-			Config: config,
+	if config.TokenSecretName != "" {
+		token, ok := os.LookupEnv("GitHubToken")
+		if !ok {
+			return nil, errors.New("ENV var 'GitHubToken' not set")
 		}
+
+		r.Client.WithAuthToken(token)
 	}
 
-	client := unauthenticatedGitHubClient(tr)
-	return &GitHubRegistry{
-		Client: client,
-		Config: config,
-	}
-}
-
-// Helper function to build the GitHub repo path
-func (gh *GitHubRegistry) Path(provider, name string) string {
-	if gh.Config.RepoPrefix == "" {
-		return fmt.Sprintf("%s-%s", provider, name)
-	}
-
-	return fmt.Sprintf("%s-%s-%s", gh.Config.RepoPrefix, provider, name)
+	return r, nil
 }
 
 // List all tags for a GitHub registry
-func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]string, error) {
+// See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
+func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 	var allTags []*github.RepositoryTag
-	var versions []string
+	mvs := newModuleVersions()
+	group := r.PathValue("group")
+	project := r.PathValue("project")
+	w.Header().Set("Content-Type", "application/json")
 
-	opt := &github.ListOptions{
-		PerPage: 100,
-	}
-
-	repo := gh.Path(provider, name)
-
+	opt := &github.ListOptions{}
 	for {
-		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), namespace, repo, opt)
-		if err != nil {
-			return nil, err
+		// TODO: properly pass contexts
+		// TODO: add context timeout
+		tags, resp, err := gh.Client.Repositories.ListTags(context.TODO(), group, project, opt)
+		if resp == nil && err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound && err != nil {
+			http.Error(w, err.Error(), http.StatusNotFound)
+			return
 		}
 
 		allTags = append(allTags, tags...)
@@ -121,24 +79,29 @@ func (gh *GitHubRegistry) ListVersions(namespace, name, provider string) ([]stri
 	}
 
 	for _, v := range allTags {
-		versions = append(versions, *v.Name)
+		mvs.addVersion(v.Name)
 	}
-	return versions, nil
+
+	mvs.setSource(fmt.Sprintf("github.com/%s/%s", group, project))
+
+	if err := json.NewEncoder(w).Encode(mvs); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 // Download source code for a specific module version
 // See https://www.terraform.io/internals/module-registry-protocol#download-source-code-for-a-specific-module-version
-func (gh *GitHubRegistry) Download(namespace, name, provider, version string) string {
-	path := gh.Path(provider, name)
+//
+// The module protocl doesn't directly pass the version field as a the ref
+// It doesn't want a "v" specified in the HCL but seems to expect tag refs are prefixed with "v"
+func (gh GitHubRegistry) Download(w http.ResponseWriter, r *http.Request) {
+	group := r.PathValue("group")
+	project := r.PathValue("project")
+	version := r.PathValue("version")
 
-	return fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Config.Protocol, namespace, path, version)
-}
-
-// Validate GitHub client
-func (gh *GitHubRegistry) validate() error {
-	if gh.Config.Protocol != "https" && gh.Config.Protocol != "ssh" {
-		return errors.New(fmt.Sprintf("Invalid protocol: %s", gh.Config.Protocol))
-	}
-
-	return nil
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, group, project, version))
+	w.WriteHeader(http.StatusNoContent)
 }

@@ -1,36 +1,70 @@
 package moduleregistry
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
+	"net/http"
+)
+
+const (
+	discoveryPath string = "GET /.well-known/terraform.json"
 )
 
 type Registry interface {
-	ListVersions(namespace, name, provider string) ([]string, error)
-	Download(namespace, name, provider, version string) string
-	Path(provider, name string) string
-	validate() error
+	Versions(w http.ResponseWriter, r *http.Request)
+	Download(w http.ResponseWriter, r *http.Request)
 }
 
 // Build a new Registry interface
-func NewModuleRegistry(registryType *string, config []byte) (Registry, error) {
-	var r Registry
+// TODO: support S3
+func NewModuleRegistry(config Config) (*http.ServeMux, error) {
+	mux := http.NewServeMux()
+	mux.HandleFunc(discoveryPath, discovery)
+	mux.HandleFunc("/healthcheck", healthCheck)
 
-	switch *registryType {
-	case "github":
-		c, err := newGitHubConfig(config)
-		if err != nil {
-			return nil, err
+	for r, rc := range config.Registry {
+		switch r {
+		case "github":
+			// TODO: set defaults
+			// TODO: validate config
+			c, ok := rc.(GithubConfig)
+			if !ok {
+				return nil, errors.New("invalid github config")
+			}
+
+			r, err := NewGitHubRegistry(c)
+			if err != nil {
+				return nil, err
+			}
+
+			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
+			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
+			return mux, nil
 		}
-
-		r = NewGitHubRegistry(c)
-	default:
-		return nil, errors.New(fmt.Sprintf("Unsupported registy type: %s", *registryType))
 	}
 
-	if err := r.validate(); err != nil {
-		return nil, err
+	return nil, errors.New("Unsupported registry type")
+}
+
+// Discovery process
+// See https://developer.hashicorp.com/terraform/internals/remote-service-discovery#discovery-process
+func discovery(w http.ResponseWriter, r *http.Request) {
+	wk := wellKnown{
+		Modules: "/v1/modules/",
 	}
 
-	return r, nil
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(wk); err != nil {
+		log.Printf("json encoding failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func healthCheck(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode("ok"); err != nil {
+		log.Printf("json encoding failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+	}
 }

@@ -42,9 +42,6 @@ spec:
             {{- end }}
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
-          args:
-            - "--module-registry-backend"
-            - {{ .Values.moduleRegistryType }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           livenessProbe:
