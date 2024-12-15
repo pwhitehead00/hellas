@@ -4,3 +4,4 @@
 /server.crt
 /server.key
 /server
+hack/values.yaml
