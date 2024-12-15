@@ -48,7 +48,7 @@ func main() {
 	}
 
 	go func() {
-		if err := srv.ListenAndServeTLS("", ""); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		if err := srv.ListenAndServeTLS("", ""); !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server startup failed: %s\n", err)
 		}
 	}()
@@ -57,7 +57,7 @@ func main() {
 
 	<-ctx.Done()
 	log.Println("shutdown requested:", ctx.Err())
-	stop()
+
 	if err := srv.Shutdown(ctx); err != nil {
 		log.Fatalf("server shutdown forced: %s", err)
 	}

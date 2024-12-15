@@ -59,7 +59,7 @@ func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 	for {
 		// TODO: properly pass contexts
 		// TODO: add context timeout
-		tags, resp, err := gh.Client.Repositories.ListTags(context.Background(), group, project, opt)
+		tags, resp, err := gh.Client.Repositories.ListTags(context.TODO(), group, project, opt)
 		if resp == nil && err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
