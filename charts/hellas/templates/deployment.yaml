@@ -21,7 +21,6 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
         checksum/tls: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -32,14 +31,6 @@ spec:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: {{ .Chart.Name }}
-          env:
-            {{- if .Values.moduleRegistry.token }}
-            - name: TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "hellas.fullname" . }}
-                  key: token
-            {{- end }}
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:

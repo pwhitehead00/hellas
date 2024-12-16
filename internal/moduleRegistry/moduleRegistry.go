@@ -3,6 +3,7 @@ package moduleregistry
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 )
@@ -16,35 +17,33 @@ type Registry interface {
 	Download(w http.ResponseWriter, r *http.Request)
 }
 
-// Build a new Registry interface
 // TODO: support S3
 func NewModuleRegistry(config Config) (*http.ServeMux, error) {
+	enabled := false
 	mux := http.NewServeMux()
 	mux.HandleFunc(discoveryPath, discovery)
 	mux.HandleFunc("/healthcheck", healthCheck)
 
-	for r, rc := range config.Registry {
-		switch r {
-		case "github":
-			// TODO: set defaults
-			// TODO: validate config
-			c, ok := rc.(GithubConfig)
-			if !ok {
-				return nil, errors.New("invalid github config")
-			}
-
-			r, err := NewGitHubRegistry(c)
-			if err != nil {
-				return nil, err
-			}
-
-			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
-			mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
-			return mux, nil
+	if config.Registries.Github.Enabled {
+		if err := config.Registries.Github.Validate(); err != nil {
+			return nil, fmt.Errorf("invalid github config: %w", err)
 		}
+
+		enabled = true
+		r, err := NewGitHubRegistry(config.Registries.Github)
+		if err != nil {
+			return nil, err
+		}
+
+		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
+		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
 	}
 
-	return nil, errors.New("Unsupported registry type")
+	if !enabled {
+		return nil, errors.New("no registries enabled")
+	}
+
+	return mux, nil
 }
 
 // Discovery process

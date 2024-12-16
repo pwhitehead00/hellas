@@ -1,12 +1,13 @@
 replicaCount: 1
 
-moduleRegistryType: ""
+registries:
+  github:
+    enabled: true
+    protocol: https
+    insecureSkipVerify: true
+
 cert: ""
 key: ""
-
-moduleRegistry:
-  insecureSkipVerify: false
-  protocol: https
 
 imageKey:
   repository: hellas

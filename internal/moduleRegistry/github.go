@@ -15,7 +15,7 @@ import (
 
 type GitHubRegistry struct {
 	Client   *github.Client
-	Protocol string
+	Protocol protocol
 }
 
 // New GitHub module registry
