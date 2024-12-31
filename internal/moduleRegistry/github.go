@@ -48,47 +48,50 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 
 // List all tags for a GitHub registry
 // See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
-func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-	defer cancel()
+func (gh GitHubRegistry) Versions() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
 
-	var allTags []*github.RepositoryTag
-	mvs := newModuleVersions()
-	group := r.PathValue("group")
-	project := r.PathValue("project")
-	w.Header().Set("Content-Type", "application/json")
+		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+		defer cancel()
 
-	opt := &github.ListOptions{}
-	for {
-		tags, resp, err := gh.Client.Repositories.ListTags(ctx, group, project, opt)
-		if resp == nil && err != nil {
+		var allTags []*github.RepositoryTag
+		mvs := newModuleVersions()
+		group := r.PathValue("group")
+		project := r.PathValue("project")
+		w.Header().Set("Content-Type", "application/json")
+
+		opt := &github.ListOptions{}
+		for {
+			tags, resp, err := gh.Client.Repositories.ListTags(ctx, group, project, opt)
+			if resp == nil && err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer resp.Body.Close()
+
+			if resp.StatusCode == http.StatusNotFound && err != nil {
+				http.Error(w, err.Error(), http.StatusNotFound)
+				return
+			}
+
+			allTags = append(allTags, tags...)
+			if resp.NextPage == 0 {
+				break
+			}
+			opt.Page = resp.NextPage
+		}
+
+		for _, v := range allTags {
+			mvs.addVersion(v.Name)
+		}
+
+		mvs.setSource(fmt.Sprintf("github.com/%s/%s", group, project))
+
+		if err := json.NewEncoder(w).Encode(mvs); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		defer resp.Body.Close()
-
-		if resp.StatusCode == http.StatusNotFound && err != nil {
-			http.Error(w, err.Error(), http.StatusNotFound)
-			return
-		}
-
-		allTags = append(allTags, tags...)
-		if resp.NextPage == 0 {
-			break
-		}
-		opt.Page = resp.NextPage
-	}
-
-	for _, v := range allTags {
-		mvs.addVersion(v.Name)
-	}
-
-	mvs.setSource(fmt.Sprintf("github.com/%s/%s", group, project))
-
-	if err := json.NewEncoder(w).Encode(mvs); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
 	}
 }
 
@@ -97,12 +100,14 @@ func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 //
 // The module protocl doesn't directly pass the version field as a the ref
 // It doesn't want a "v" specified in the HCL but seems to expect tag refs are prefixed with "v"
-func (gh GitHubRegistry) Download(w http.ResponseWriter, r *http.Request) {
-	group := r.PathValue("group")
-	project := r.PathValue("project")
-	version := r.PathValue("version")
+func (gh GitHubRegistry) Download() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		group := r.PathValue("group")
+		project := r.PathValue("project")
+		version := r.PathValue("version")
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, group, project, version))
-	w.WriteHeader(http.StatusNoContent)
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, group, project, version))
+		w.WriteHeader(http.StatusNoContent)
+	}
 }

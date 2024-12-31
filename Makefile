@@ -1,6 +1,10 @@
 .PHONY: dev
 dev: create-cluster image-load cert-manager install-hellas
 
+.PHONY: redeploy
+redeploy: image-load
+	kubectl -n hellas rollout restart deployment hellas
+
 .PHONY: create-cluster
 create-cluster:
 	kind create cluster

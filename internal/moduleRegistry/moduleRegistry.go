@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
@@ -13,8 +14,8 @@ const (
 )
 
 type Registry interface {
-	Versions(w http.ResponseWriter, r *http.Request)
-	Download(w http.ResponseWriter, r *http.Request)
+	Versions() http.HandlerFunc
+	Download() http.HandlerFunc
 }
 
 // TODO: support S3
@@ -35,8 +36,8 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 			return nil, err
 		}
 
-		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
-		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
+		mux.Handle("GET /v1/modules/{group}/{project}/github/versions", http.TimeoutHandler(r.Versions(), 10*time.Second, "failed to get github version: timeout"))
+		mux.Handle("GET /v1/modules/{group}/{project}/github/{version}/download", http.TimeoutHandler(r.Download(), 10*time.Second, "failed to get github download: timeout"))
 	}
 
 	if !enabled {
