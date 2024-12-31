@@ -16,22 +16,22 @@ var (
 	invalidProtocol error = errors.New("invalid protocol")
 )
 
-type GithubConfig struct {
+type githubConfig struct {
 	TokenSecretName    string   `yaml:"tokenSecretName,omitempty"`
 	Protocol           protocol `yaml:"protocol"`
 	Enabled            bool     `yaml:"enabled"`
 	InsecureSkipVerify bool     `yaml:"insecureSkipVerify"`
 }
 
-type Registries struct {
-	Github GithubConfig `yaml:"github"`
+type registries struct {
+	Github githubConfig `yaml:"github"`
 }
 
 type Config struct {
-	Registries Registries `yaml:"registries"`
+	Registries registries `yaml:"registries"`
 }
 
-func (gh GithubConfig) Validate() error {
+func (gh githubConfig) validate() error {
 	switch gh.Protocol {
 	case protocolHTTPS, protocolSSH:
 		return nil

@@ -15,8 +15,8 @@ func TestNewModuleRegistry(t *testing.T) {
 		{
 			desc: "Valid GitHub Config",
 			input: Config{
-				Registries: Registries{
-					Github: GithubConfig{
+				Registries: registries{
+					Github: githubConfig{
 						Protocol:           "https",
 						InsecureSkipVerify: true,
 						Enabled:            true,

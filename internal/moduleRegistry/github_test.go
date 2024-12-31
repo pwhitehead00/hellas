@@ -21,8 +21,8 @@ func TestGitHubDownload(t *testing.T) {
 		{
 			desc: "successful http protocol",
 			config: Config{
-				Registries: Registries{
-					Github: GithubConfig{
+				Registries: registries{
+					Github: githubConfig{
 						Enabled:  true,
 						Protocol: protocolHTTPS,
 					},

@@ -9,19 +9,19 @@ import (
 func TestValidateGitHub(t *testing.T) {
 	testCases := []struct {
 		desc  string
-		input GithubConfig
+		input githubConfig
 		err   error
 	}{
 		{
 			desc: "Successful Github validation",
-			input: GithubConfig{
+			input: githubConfig{
 				Protocol: "https",
 			},
 			err: nil,
 		},
 		{
 			desc: "failed Github validation",
-			input: GithubConfig{
+			input: githubConfig{
 				Protocol: "bad protocol",
 			},
 			err: invalidProtocol,
@@ -29,7 +29,7 @@ func TestValidateGitHub(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
-			actual := tC.input.Validate()
+			actual := tC.input.validate()
 			assert.ErrorIs(t, actual, tC.err)
 		})
 	}

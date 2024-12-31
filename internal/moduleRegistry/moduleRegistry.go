@@ -26,7 +26,7 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 	mux.HandleFunc("/healthcheck", healthCheck)
 
 	if config.Registries.Github.Enabled {
-		if err := config.Registries.Github.Validate(); err != nil {
+		if err := config.Registries.Github.validate(); err != nil {
 			return nil, fmt.Errorf("invalid github config: %w", err)
 		}
 

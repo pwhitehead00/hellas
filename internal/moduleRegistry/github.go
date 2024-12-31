@@ -19,7 +19,7 @@ type GitHubRegistry struct {
 }
 
 // New GitHub module registry
-func NewGitHubRegistry(config GithubConfig) (Registry, error) {
+func NewGitHubRegistry(config githubConfig) (Registry, error) {
 	var r GitHubRegistry
 
 	httpClient := &http.Client{
