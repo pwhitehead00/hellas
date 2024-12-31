@@ -23,12 +23,12 @@ type GithubConfig struct {
 	InsecureSkipVerify bool     `yaml:"insecureSkipVerify"`
 }
 
-type registries struct {
+type Registries struct {
 	Github GithubConfig `yaml:"github"`
 }
 
 type Config struct {
-	Registries registries `yaml:"registries"`
+	Registries Registries `yaml:"registries"`
 }
 
 func (gh GithubConfig) Validate() error {
