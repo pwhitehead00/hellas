@@ -1,15 +1,43 @@
-MODULE = $(shell go list -m)
-LDFLAGS := -ldflags "-X main.Version=${VERSION}"
+.PHONY: dev
+dev: create-cluster image-load cert-manager install-hellas
 
-.PHONY: up
-up:
-	minikube start --kubernetes-version 1.22.4
-	skaffold dev
+.PHONY: create-cluster
+create-cluster:
+	kind create cluster
+
+.PHONY: cert-manager
+cert-manager:
+	helm repo add jetstack https://charts.jetstack.io --force-update
+	helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set crds.enabled=true --wait
+	kubectl apply -f hack/self-signed.yaml --wait
+	kubectl create ns hellas
+	kubectl apply -f hack/cert.yaml
+
+.PHONY: install-hellas
+install-hellas:
+	helm upgrade --install --namespace hellas --create-namespace hellas ./charts/hellas
 
 .PHONY: clean
 clean:
-	minikube delete
+	kind delete cluster
 
-.PHONY: build
+.PHONY: docker-build-dev
 build:
-	CGO_ENABLED=0 go build ${LDFLAGS} -a -o server $(MODULE)/cmd/server
+	CGO_ENABLED=0 docker build -t hellas:latest .
+
+.PHONY: image-load
+image-load: docker-build-dev
+	kind load docker-image hellas:latest
+
+.PHONY: debug
+debug:
+	kubectl -n hellas create cm init-script --from-file=./hack/init.sh
+	kubectl -n hellas apply -f ./hack/debug.yaml
+
+.PHONY: debug-test
+debug-test:
+	kubectl -n hellas exec debug -- env TF_LOG=DEBUG terraform -chdir=/terraform init -upgrade
+
+.PHONY: debug-clean
+debug-clean:
+	kubectl -n hellas delete cm/init-script po/debug

@@ -2,35 +2,21 @@
 
 ## Developing Cycle
 
-## Requirements
+### Requirements
 
-* Minikube
-* Skaffold
+* [docker desktop](https://www.docker.com/products/docker-desktop/)
+* [kind](https://kind.sigs.k8s.io/)
 
 ### Getting Started
 
-Run `make up` to stand up a minikube cluster and start Skaffold
+Run `make dev` to create a kind cluster, install and configure cert manager and
+Hellas. A self signed cert is automatically created. `make clean` will delete
+the test cluster.
 
-### Cleanup
+Running `make debug` will create a debug pod with the latest version of
+Terraform. Run `make debug-test` to test `terraform init` with a minimal
+Terraform configuration file. `make debug-clean` to remove test artifacts.
 
-Run `make clean` to tear down and clean up minikube and stop Skaffold
+## TODO
 
-```yaml
-server:
-  certSecretName: my-cert
-
-registry:
-  github:
-    tokenSecretName: my-token
-    insecureSkipVerify: false
-    protocol: https
-  # s3:
-  #   region: us-east-1
-  #   bucket: foo
-  #   path: bar/bix
-```
-
-TODO:
-
-* set up cert manager integration
 * set up logging

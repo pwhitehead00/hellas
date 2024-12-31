@@ -1,0 +1,17 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: hellas
+  namespace: hellas
+spec:
+  secretName: hellas
+  duration: 2160h # 90d
+  renewBefore: 360h # 15d
+  commonName: hellas.hellas
+  dnsNames:
+    - hellas
+    - hellas.hellas
+    - hellas.hellas.svc.cluster.local
+  issuerRef:
+    name: self-signed
+    kind: ClusterIssuer
