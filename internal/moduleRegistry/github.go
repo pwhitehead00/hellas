@@ -15,7 +15,7 @@ import (
 
 type GitHubRegistry struct {
 	Client   *github.Client
-	Protocol string
+	Protocol protocol
 }
 
 // New GitHub module registry
@@ -23,7 +23,7 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 	var r GitHubRegistry
 
 	httpClient := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 15 * time.Second,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: config.InsecureSkipVerify,
@@ -35,9 +35,9 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 	r.Protocol = config.Protocol
 
 	if config.TokenSecretName != "" {
-		token, ok := os.LookupEnv("GitHubToken")
+		token, ok := os.LookupEnv("GITHUB_TOKEN")
 		if !ok {
-			return nil, errors.New("ENV var 'GitHubToken' not set")
+			return nil, errors.New("ENV var 'GITHUB_TOKEN' not set")
 		}
 
 		r.Client.WithAuthToken(token)
@@ -49,6 +49,9 @@ func NewGitHubRegistry(config GithubConfig) (Registry, error) {
 // List all tags for a GitHub registry
 // See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
 func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
+	defer cancel()
+
 	var allTags []*github.RepositoryTag
 	mvs := newModuleVersions()
 	group := r.PathValue("group")
@@ -57,9 +60,7 @@ func (gh GitHubRegistry) Versions(w http.ResponseWriter, r *http.Request) {
 
 	opt := &github.ListOptions{}
 	for {
-		// TODO: properly pass contexts
-		// TODO: add context timeout
-		tags, resp, err := gh.Client.Repositories.ListTags(context.TODO(), group, project, opt)
+		tags, resp, err := gh.Client.Repositories.ListTags(ctx, group, project, opt)
 		if resp == nil && err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

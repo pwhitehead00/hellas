@@ -11,30 +11,22 @@ import (
 
 	mr "github.com/pwhitehead00/hellas/internal/moduleRegistry"
 	"github.com/pwhitehead00/hellas/internal/server"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// todo - proper config setup
-	config := mr.Config{
-		Registry: map[string]any{
-			"github": mr.GithubConfig{
-				Protocol: "https",
-			},
-		},
+	configBytes, err := os.ReadFile("/config/config.yaml")
+	if err != nil {
+		log.Fatal(err)
 	}
-	// var config mr.Config
 
-	// data, err := os.ReadFile("configFile")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-
-	// if err := yaml.Unmarshal(data, &config); err != nil {
-	// 	log.Fatal(err)
-	// }
+	var config mr.Config
+	if err := yaml.Unmarshal(configBytes, &config); err != nil {
+		log.Fatal(err)
+	}
 
 	mux, err := mr.NewModuleRegistry(config)
 	if err != nil {

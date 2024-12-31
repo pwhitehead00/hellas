@@ -20,8 +20,6 @@ spec:
         {{- include "hellas.selectorLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
-        checksum/tls: {{ include (print $.Template.BasePath "/secret-tls.yaml") . | sha256sum }}
-        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -33,13 +31,13 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           env:
-            {{- if .Values.moduleRegistry.token }}
-            - name: TOKEN
+          {{- if .Values.registries.github.tokenSecretName }}
+            - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "hellas.fullname" . }}
+                  name: {{ .Values.registries.github.tokenSecretName }}
                   key: token
-            {{- end }}
+          {{- end }}
           image: "{{ .Values.imageKey.repository }}:{{ .Values.imageKey.tag }}"
           imagePullPolicy: {{ .Values.imageKey.pullPolicy }}
           securityContext:
@@ -67,13 +65,13 @@ spec:
             - name: config
               mountPath: "/config"
               readOnly: true
-            - name: tls
+            - name: tls-config
               mountPath: "/tls"
               readOnly: true
       volumes:
-        - name: tls
+        - name: tls-config
           secret:
-            secretName: {{ include "hellas.fullname" . }}-tls
+            secretName: {{ .Values.secretName }}
         - name: config
           configMap:
             name: {{ include "hellas.fullname" . }}

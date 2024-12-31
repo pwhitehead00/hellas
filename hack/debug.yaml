@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: debug
+  name: debug
+spec:
+  containers:
+    - name: debug
+      command:
+        - /usr/bin/bash
+      args:
+        - -c
+        - >-
+          /build/scripts/init.sh &&
+          cp /build/certs/ca.crt /etc/ssl/certs &&
+          update-ca-certificates &&
+          sleep infinity
+      image: ubuntu:latest
+      resources: {}
+      volumeMounts:
+        - name: init-script
+          mountPath: /build/scripts
+        - name: ca
+          mountPath: /build/certs
+  restartPolicy: Never
+  volumes:
+    - name: init-script
+      configMap:
+        name: init-script
+        defaultMode: 0744
+    - name: ca
+      secret:
+        secretName: hellas
+        items:
+          - key: ca.crt
+            path: ca.crt
+            mode: 0644
