@@ -17,7 +17,7 @@ var (
 	noRegistriesEnabled error = errors.New("no registries enabled")
 )
 
-type Registry interface {
+type registry interface {
 	Versions() http.HandlerFunc
 	Download() http.HandlerFunc
 }

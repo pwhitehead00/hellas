@@ -13,14 +13,14 @@ import (
 	"github.com/google/go-github/v64/github"
 )
 
-type GitHubRegistry struct {
-	Client   *github.Client
-	Protocol protocol
+type gitHubRegistry struct {
+	client   *github.Client
+	protocol protocol
 }
 
 // New GitHub module registry
-func NewGitHubRegistry(config githubConfig) (Registry, error) {
-	var r GitHubRegistry
+func NewGitHubRegistry(config githubConfig) (registry, error) {
+	var r gitHubRegistry
 
 	httpClient := &http.Client{
 		Timeout: 15 * time.Second,
@@ -31,8 +31,8 @@ func NewGitHubRegistry(config githubConfig) (Registry, error) {
 		},
 	}
 
-	r.Client = github.NewClient(httpClient)
-	r.Protocol = config.Protocol
+	r.client = github.NewClient(httpClient)
+	r.protocol = config.Protocol
 
 	if config.TokenSecretName != "" {
 		token, ok := os.LookupEnv("GITHUB_TOKEN")
@@ -40,7 +40,7 @@ func NewGitHubRegistry(config githubConfig) (Registry, error) {
 			return nil, errors.New("ENV var 'GITHUB_TOKEN' not set")
 		}
 
-		r.Client.WithAuthToken(token)
+		r.client.WithAuthToken(token)
 	}
 
 	return r, nil
@@ -48,7 +48,7 @@ func NewGitHubRegistry(config githubConfig) (Registry, error) {
 
 // List all tags for a GitHub registry
 // See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
-func (gh GitHubRegistry) Versions() http.HandlerFunc {
+func (gh gitHubRegistry) Versions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
@@ -62,7 +62,7 @@ func (gh GitHubRegistry) Versions() http.HandlerFunc {
 
 		opt := &github.ListOptions{}
 		for {
-			tags, resp, err := gh.Client.Repositories.ListTags(ctx, group, project, opt)
+			tags, resp, err := gh.client.Repositories.ListTags(ctx, group, project, opt)
 			if resp == nil && err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
@@ -100,14 +100,14 @@ func (gh GitHubRegistry) Versions() http.HandlerFunc {
 //
 // The module protocl doesn't directly pass the version field as a the ref
 // It doesn't want a "v" specified in the HCL but seems to expect tag refs are prefixed with "v"
-func (gh GitHubRegistry) Download() http.HandlerFunc {
+func (gh gitHubRegistry) Download() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		group := r.PathValue("group")
 		project := r.PathValue("project")
 		version := r.PathValue("version")
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.Protocol, group, project, version))
+		w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.protocol, group, project, version))
 		w.WriteHeader(http.StatusNoContent)
 	}
 }
