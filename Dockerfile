@@ -6,7 +6,7 @@ COPY . .
 RUN go mod download
 RUN go mod verify
 
-RUN make build
+RUN CGO_ENABLED=0 go build -ldflags "-X main.Version=${VERSION}" -a -o server ./cmd/server
 
 FROM gcr.io/distroless/static
 
