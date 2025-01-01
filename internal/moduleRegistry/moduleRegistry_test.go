@@ -16,7 +16,7 @@ func TestNewModuleRegistry(t *testing.T) {
 		err   error
 	}{
 		{
-			desc: "Valid GitHub Config",
+			desc: "valid github config",
 			input: Config{
 				Registries: registries{
 					Github: githubConfig{
@@ -28,11 +28,37 @@ func TestNewModuleRegistry(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "no registries enabled",
+			input: Config{
+				Registries: registries{
+					Github: githubConfig{
+						Protocol:           "https",
+						InsecureSkipVerify: true,
+						Enabled:            false,
+					},
+				},
+			},
+			err: noRegistriesEnabled,
+		},
+		{
+			desc: "invalid github protocol",
+			input: Config{
+				Registries: registries{
+					Github: githubConfig{
+						Protocol: "http",
+						Enabled:  true,
+					},
+				},
+			},
+			err: invalidProtocol,
+		},
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			_, err := NewModuleRegistry(tC.input)
-			assert.Equal(t, tC.err, err)
+			// assert.Equal(t, tC.err, err)
+			assert.ErrorIs(t, err, tC.err)
 		})
 	}
 }

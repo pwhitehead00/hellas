@@ -13,6 +13,10 @@ const (
 	discoveryPath string = "GET /.well-known/terraform.json"
 )
 
+var (
+	noRegistriesEnabled error = errors.New("no registries enabled")
+)
+
 type Registry interface {
 	Versions() http.HandlerFunc
 	Download() http.HandlerFunc
@@ -41,7 +45,7 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 	}
 
 	if !enabled {
-		return nil, errors.New("no registries enabled")
+		return nil, noRegistriesEnabled
 	}
 
 	return mux, nil
