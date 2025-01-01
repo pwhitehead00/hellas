@@ -1,6 +1,10 @@
 .PHONY: dev
 dev: create-cluster image-load cert-manager install-hellas
 
+.PHONY: redeploy
+redeploy: image-load
+	kubectl -n hellas rollout restart deployment hellas
+
 .PHONY: create-cluster
 create-cluster:
 	kind create cluster
@@ -22,8 +26,9 @@ clean:
 	kind delete cluster
 
 .PHONY: docker-build-dev
-build:
-	CGO_ENABLED=0 docker build -t hellas:latest .
+docker-build-dev:
+	# CGO_ENABLED=0 docker build -t hellas:latest .
+	docker build -t hellas:latest .
 
 .PHONY: image-load
 image-load: docker-build-dev

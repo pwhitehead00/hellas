@@ -33,7 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// todo - configure TLS with config
 	srv, err := server.NewServer(mux, true, "/tls/tls.crt", "/tls/tls.key")
 	if err != nil {
 		log.Fatal(err)

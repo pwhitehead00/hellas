@@ -1,20 +1,26 @@
 package moduleregistry
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 )
 
 const (
 	discoveryPath string = "GET /.well-known/terraform.json"
 )
 
-type Registry interface {
-	Versions(w http.ResponseWriter, r *http.Request)
-	Download(w http.ResponseWriter, r *http.Request)
+var (
+	noRegistriesEnabled error = errors.New("no registries enabled")
+)
+
+type registry interface {
+	Versions() http.HandlerFunc
+	Download() http.HandlerFunc
 }
 
 // TODO: support S3
@@ -25,22 +31,31 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 	mux.HandleFunc("/healthcheck", healthCheck)
 
 	if config.Registries.Github.Enabled {
-		if err := config.Registries.Github.Validate(); err != nil {
+		if err := config.Registries.Github.validate(); err != nil {
 			return nil, fmt.Errorf("invalid github config: %w", err)
 		}
-
 		enabled = true
-		r, err := NewGitHubRegistry(config.Registries.Github)
+
+		httpClient := &http.Client{
+			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: config.Registries.Github.InsecureSkipVerify,
+				},
+			},
+		}
+
+		r, err := NewGitHubRegistry(httpClient, config.Registries.Github)
 		if err != nil {
 			return nil, err
 		}
 
-		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/versions", r.Versions)
-		mux.HandleFunc("GET /v1/modules/{group}/{project}/github/{version}/download", r.Download)
+		mux.Handle("GET /v1/modules/{group}/{project}/github/versions", http.TimeoutHandler(r.Versions(), 10*time.Second, "failed to get github version: timeout"))
+		mux.Handle("GET /v1/modules/{group}/{project}/github/{version}/download", http.TimeoutHandler(r.Download(), 10*time.Second, "failed to get github download: timeout"))
 	}
 
 	if !enabled {
-		return nil, errors.New("no registries enabled")
+		return nil, noRegistriesEnabled
 	}
 
 	return mux, nil
