@@ -1,6 +1,7 @@
 package moduleregistry
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,9 +34,18 @@ func NewModuleRegistry(config Config) (*http.ServeMux, error) {
 		if err := config.Registries.Github.validate(); err != nil {
 			return nil, fmt.Errorf("invalid github config: %w", err)
 		}
-
 		enabled = true
-		r, err := NewGitHubRegistry(config.Registries.Github)
+
+		httpClient := &http.Client{
+			Timeout: 15 * time.Second,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: config.Registries.Github.InsecureSkipVerify,
+				},
+			},
+		}
+
+		r, err := NewGitHubRegistry(httpClient, config.Registries.Github)
 		if err != nil {
 			return nil, err
 		}

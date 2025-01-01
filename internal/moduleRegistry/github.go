@@ -1,14 +1,11 @@
 package moduleregistry
 
 import (
-	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/google/go-github/v64/github"
 )
@@ -19,18 +16,8 @@ type gitHubRegistry struct {
 }
 
 // New GitHub module registry
-func NewGitHubRegistry(config githubConfig) (registry, error) {
+func NewGitHubRegistry(httpClient *http.Client, config githubConfig) (registry, error) {
 	var r gitHubRegistry
-
-	httpClient := &http.Client{
-		Timeout: 15 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: config.InsecureSkipVerify,
-			},
-		},
-	}
-
 	r.client = github.NewClient(httpClient)
 	r.protocol = config.Protocol
 
@@ -50,10 +37,6 @@ func NewGitHubRegistry(config githubConfig) (registry, error) {
 // See https://developer.hashicorp.com/terraform/internals/module-registry-protocol#list-available-versions-for-a-specific-module
 func (gh gitHubRegistry) Versions() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
-		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
-		defer cancel()
-
 		var allTags []*github.RepositoryTag
 		mvs := newModuleVersions()
 		group := r.PathValue("group")
@@ -62,7 +45,7 @@ func (gh gitHubRegistry) Versions() http.HandlerFunc {
 
 		opt := &github.ListOptions{}
 		for {
-			tags, resp, err := gh.client.Repositories.ListTags(ctx, group, project, opt)
+			tags, resp, err := gh.client.Repositories.ListTags(r.Context(), group, project, opt)
 			if resp == nil && err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
