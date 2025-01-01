@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,7 +58,6 @@ func TestNewModuleRegistry(t *testing.T) {
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
 			_, err := NewModuleRegistry(tC.input)
-			// assert.Equal(t, tC.err, err)
 			assert.ErrorIs(t, err, tC.err)
 		})
 	}
@@ -72,7 +72,7 @@ func TestDiscoveryEndpoint(t *testing.T) {
 		{
 			desc:       "successful response",
 			statusCode: http.StatusOK,
-			body:       "{\"modules.v1\":\"/v1/modules/\"}\n",
+			body:       `{"modules.v1":"/v1/modules/"}`,
 		},
 	}
 	for _, tC := range testCases {
@@ -88,7 +88,7 @@ func TestDiscoveryEndpoint(t *testing.T) {
 			}
 			defer resp.Body.Close()
 
-			assert.Equal(t, tC.body, string(body))
+			assert.Equal(t, tC.body, strings.TrimSpace(string(body)))
 			assert.Equal(t, tC.statusCode, resp.StatusCode)
 		})
 	}
@@ -103,7 +103,7 @@ func TestHealthCheck(t *testing.T) {
 		{
 			desc:       "successful response",
 			statusCode: http.StatusOK,
-			body:       "\"ok\"\n",
+			body:       `"ok"`,
 		},
 	}
 	for _, tC := range testCases {
@@ -119,7 +119,7 @@ func TestHealthCheck(t *testing.T) {
 			}
 			defer resp.Body.Close()
 
-			assert.Equal(t, tC.body, string(body))
+			assert.Equal(t, tC.body, strings.TrimSpace(string(body)))
 			assert.Equal(t, tC.statusCode, resp.StatusCode)
 		})
 	}
