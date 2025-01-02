@@ -2,11 +2,16 @@ package server
 
 import (
 	"crypto/tls"
+	"log/slog"
 	"net/http"
 	"time"
+
+	"github.com/pwhitehead00/hellas/internal/logging"
 )
 
 func NewServer(mux *http.ServeMux, skipTLSVerify bool, cert, key string) (*http.Server, error) {
+	log := slog.NewLogLogger(logging.Handler, slog.LevelError)
+
 	s := &http.Server{
 		Addr:         ":8443",
 		Handler:      mux,
@@ -24,6 +29,7 @@ func NewServer(mux *http.ServeMux, skipTLSVerify bool, cert, key string) (*http.
 				return &caFiles, nil
 			},
 		},
+		ErrorLog: log,
 	}
 
 	return s, nil

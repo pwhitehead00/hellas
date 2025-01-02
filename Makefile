@@ -43,6 +43,10 @@ debug:
 debug-test:
 	kubectl -n hellas exec debug -- env TF_LOG=DEBUG terraform -chdir=/terraform init -upgrade
 
+.PHONY: debug-test-errors
+debug-test-errors:
+	kubectl -n hellas exec debug -- env TF_LOG=DEBUG terraform -chdir=/errors init -upgrade
+
 .PHONY: debug-clean
 debug-clean:
 	kubectl -n hellas delete cm/init-script po/debug

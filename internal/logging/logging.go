@@ -1,35 +1,36 @@
 package logging
 
 import (
-	"encoding/json"
-	"fmt"
-	"time"
-
-	"github.com/gin-gonic/gin"
+	"log/slog"
+	"os"
+	"strings"
 )
 
-type log struct {
-	TimeStamp  string `json:"date"`
-	Path       string `json:"path"`
-	Method     string `json:"method"`
-	ClientIP   string `json:"clientIP"`
-	StatusCode int    `json:"statusCode"`
-	Latency    string `json:"latency"`
-	UserAgent  string `json:"userAgent"`
-	Error      string `json:"error,omitempty"`
+var (
+	Log     *slog.Logger
+	Handler *slog.JSONHandler
+	Level   = &slog.LevelVar{}
+)
+
+func init() {
+	Handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: Level,
+	})
+
+	Log = slog.New(Handler)
 }
 
-func Logger(p gin.LogFormatterParams) string {
-	var l log
-	l.TimeStamp = p.TimeStamp.Format(time.RFC3339)
-	l.Path = p.Path
-	l.Method = p.Method
-	l.ClientIP = p.ClientIP
-	l.StatusCode = p.StatusCode
-	l.Latency = p.Latency.String()
-	l.UserAgent = p.Request.UserAgent()
-	l.Error = p.ErrorMessage
-
-	out, _ := json.Marshal(l)
-	return fmt.Sprintln(string(out))
+func SetLogLevel(l string) slog.Level {
+	switch strings.ToLower(l) {
+	case "debug":
+		return slog.LevelDebug
+	case "info":
+		return slog.LevelInfo
+	case "warn":
+		return slog.LevelWarn
+	case "error":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }
