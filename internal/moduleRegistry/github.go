@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/google/go-github/v64/github"
+	"github.com/pwhitehead00/hellas/internal/logging"
 )
 
 type gitHubRegistry struct {
@@ -42,18 +43,23 @@ func (gh gitHubRegistry) Versions() http.HandlerFunc {
 		group := r.PathValue("group")
 		project := r.PathValue("project")
 		w.Header().Set("Content-Type", "application/json")
+		source := fmt.Sprintf("github.com/%s/%s", group, project)
+
+		log := logging.Log.With("handler", "versions", "repository-type", "github", "source", source)
 
 		opt := &github.ListOptions{}
 		for {
 			tags, resp, err := gh.client.Repositories.ListTags(r.Context(), group, project, opt)
 			if resp == nil && err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				log.Error("failed to list tags", "error", err.Error())
 				return
 			}
 			defer resp.Body.Close()
 
 			if resp.StatusCode == http.StatusNotFound && err != nil {
 				http.Error(w, err.Error(), http.StatusNotFound)
+				log.Error("project not found", "error", err.Error())
 				return
 			}
 
@@ -68,13 +74,15 @@ func (gh gitHubRegistry) Versions() http.HandlerFunc {
 			mvs.addVersion(v.Name)
 		}
 
-		mvs.setSource(fmt.Sprintf("github.com/%s/%s", group, project))
+		mvs.setSource(source)
 
 		if err := json.NewEncoder(w).Encode(mvs); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
+
+		log.Info("found tags successfully", "found", len(allTags))
 	}
 }
 
@@ -88,9 +96,13 @@ func (gh gitHubRegistry) Download() http.HandlerFunc {
 		group := r.PathValue("group")
 		project := r.PathValue("project")
 		version := r.PathValue("version")
+		source := fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.protocol, group, project, version)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.Header().Add("X-Terraform-Get", fmt.Sprintf("git::%s://github.com/%s/%s?ref=v%s", gh.protocol, group, project, version))
+		w.Header().Add("X-Terraform-Get", source)
 		w.WriteHeader(http.StatusNoContent)
+
+		log := logging.Log.With("handler", "download", "repository-type", "github")
+		log.Info("X-Terraform-Get", "value", source)
 	}
 }
