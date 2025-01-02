@@ -26,3 +26,13 @@ module "bastion" {
   servers = 3
 }
 EOF
+
+mkdir /errors
+cat << EOF > /errors/main.tf
+module "vpc" {
+  source  = "hellas.hellas/not/found/github"
+  version = "1.63.0"
+
+  servers = 3
+}
+EOF
